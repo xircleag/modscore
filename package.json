@@ -1,0 +1,15 @@
+{
+  "name": "overscore",
+  "version": "0.1.0",
+  "description": "Library for utilities and objects",
+  "main": "model.js",
+  "scripts": {
+    "test": "test"
+  },
+  "author": "Michael Kantor",
+  "license": "ISC",
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-contrib-jasmine": "^0.7.0"
+  }
+}
