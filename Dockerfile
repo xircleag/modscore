@@ -4,4 +4,5 @@ ADD . /opt/modscore/
 
 RUN \
     cd /opt/modscore/ && \
+    npm install && \
     grunt jasmine
