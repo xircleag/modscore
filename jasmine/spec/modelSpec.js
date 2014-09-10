@@ -440,7 +440,6 @@ describe("Model", function() {
                     this.$super();
                 },
                 runTest3: function(a,b,c) {
-                    debugger;
                     return (this.$super() || "") +  a + ":" + b + ":" + c;
                 }
             });
@@ -580,5 +579,30 @@ describe("Model", function() {
         });
     });
 
+    describe("Should be able to lock all private properties", function() {
+        it("Should be able to manage access to private properties", function() {
+            var Person = m_.Model.extend("Person", genericPersonDef);
+            var p = new Person();
+            expect(p.__privates.middleName).toEqual("Homer");
+
+            p.__privates.middleName = "Fred";
+            expect(p.__privates.middleName).toEqual("Fred");
+
+            var locker = m_.getPrivateModelLocker();
+            locker(true);
+
+            p.__privates.middleName = "John";
+            expect(p.__privates.middleName).toEqual(undefined);
+
+            locker(false);
+            expect(p.__privates.middleName).toEqual("Fred");
+            p.__privates.middleName = "John";
+            expect(p.__privates.middleName).toEqual("John");
+        });
+
+        it("Should not allow multiple calls to getPrivateModelLocker", function() {
+            expect(m_.getPrivateModelLocker).toBe(undefined);
+        });
+    });
 
 });
