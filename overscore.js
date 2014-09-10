@@ -1,5 +1,4 @@
 //     Miniunderscore, derived from Underscore.js 1.7.0
-"use strict";
 (function() {
 
   // Baseline setup

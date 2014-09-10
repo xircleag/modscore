@@ -10,7 +10,7 @@
  * 4. Support for proper setters/getters:  myobj.prop1 = "Fred" rather than myobj.setProp1("Fred"). Why
  *    is this preferred?  Because we don't know much about our third party developer users and their background.
  *    For the unknown developer, this is just plain simple.
- * 5. Support for Protected properties that can only be accessed by the creator of the object, but which provide the same
+ * 5. Support for private properties that can only be accessed by the creator of the object, but which provide the same
  *    validation and modeling as the public properties.
  */
 
@@ -18,76 +18,82 @@
 // > watchify model.js -d -o build/model.js
 // var m_ = require("./miniunderscore.js");
 
+// TODO: Find a way to disable/enable private getters/setters; enabler.lockPrivates(); enabler.unlockPrivates();
+// TODO: readOnly private properties are not yet supported
 // TODO: Add listeners to constructor?
-// TODO: Support for protected collections (manages the protected accessors for the array or hash)
+// TODO: Support for private collections (manages the private accessors for the array or hash)
+// TODO: Support for private methods?
 
-var modelInit = false;
+var modelInit = false, privateInit = false;
 var Model = function(params) {
-    var protectedData = {};
-
-    var protectedGetter = function(name) {
-        var def = this.__class.$meta.properties[name];
-        if (def) {
-            if (def.protected) {
-                return genericGetter.apply(this, [def, name, protectedData]);
-            } else {
-                throw new Error(name + ": Not a protected property");
-            }
-        } else {
-            throw new Error(name + ": Not a defined property");
-        }
-    };
-    var protectedSetter = function(name, value) {
-        var def = this.__class.$meta.properties[name];
-        if (def) {
-            if (def.protected) {
-                return genericSetter.apply(this, [def, name, protectedData, value]);
-            } else {
-                throw new Error(name + ": Not a protected property");
-            }
-        } else {
-            throw new Error(name + ": Not a defined property");
-        }
-    }
-    if (params && params.onProtectedInit) {
-        params.onProtectedInit(
-            protectedGetter.bind(this),
-            protectedSetter.bind(this)
-        );
-    }
-
-
-    this.__values = {
-        __notinitialized: true
-    };
     if (!modelInit) {
-        if (params) {
-            m_.extend(this, params);
+            this.__values = {
+            __notinitialized: true
+        };
+        if (!(this.__class.prototype instanceof PrivateModel)) {
+            this.__privates = new this.__class.$meta.privateClass();
+
+
+            /* For each property passed in via the constructor, set the appropriate private/public value */
+            var defs = this.__class.$meta.properties;
+            if (params) {
+                m_.each(params, function(value, name) {
+                    if (defs[name].private) {
+                        this.__privates[name] = value;
+                    } else {
+                        this[name] = value;
+                    }
+                }, this);
+            }
+
+
+            /* For each unset property with a default value, set the appropriate private/public value */
+            var allDefaults = this.__class.$meta.defaults;
+            var privateDefaults = {}, pubDefaults = {};
+            m_.each(allDefaults, function(value, name) {
+                if (defs[name]) {
+                    if (defs[name].private) {
+                        privateDefaults[name] = value;
+                    } else {
+                        pubDefaults[name] = value;
+                    }
+                }
+            }, this);
+            m_.defaults(this, pubDefaults);
+            m_.defaults(this.__privates, privateDefaults);
+
+
+            // Enforce required fields
+            m_.each(this.__class.$meta.properties, function(value, name, src) {
+                if (this[name] === undefined && src[name].required) {
+                    if (!defs[name].private) {
+                        this[name] = null;
+                    } else {
+                        this.__privates[name] = null;
+                    }
+                }
+            }, this);
+
+            this.constructor.apply(this, arguments);
+            delete this.__values.__notinitialized;
+            delete this.__privates.__notinitialized;
         }
-        m_.defaults(this, this.__class.$meta.defaults);
-
-        // Enforce required fields
-        m_.each(this.__class.$meta.properties, function(value, name, src) {
-            if (this[name] === undefined && src[name].required) this[name] = null;
-        }, this);
-        this.constructor.apply(this, arguments);
-        delete this.__values.__notinitialized;
         Object.seal(this);
-
     }
 };
 
+// Enable events on all Model instances/sublcasses
 m_.extend(Model.prototype, window.BackboneEvents);
 Model.prototype._events = {};
 window.m_.Model = Model;
 
 
-function genericGetter(def, name, values) {
-    return values[name];
+function genericGetter(def, name) {
+    return this.__values[name];
 }
 
-function genericSetter(def, name, values, inValue) {
-    var altValue, adjuster;
+function genericSetter(def, name, inValue) {
+    var altValue, adjuster, values = this.__values;
 
     /* Step 1: If readOnly property, only set it if we are in the constructor */
     if (def.readOnly && !this.__values.__notinitialized) {
@@ -156,20 +162,19 @@ function genericSetter(def, name, values, inValue) {
 
 function defineProperty(model, name, def) {
     if (def.type == "number") def.type = "integer"; // fix common user error
-    if (!def.protected) {
-        Object.defineProperty(model.prototype, name, {
-            enumerable: true,
-            configurable: def.type == "any",
-            get: function() {
-                return genericGetter.call(this, def, name, this.__values);
-            },
-            set: function(inValue) {
-                return genericSetter.call(this, def, name, this.__values, inValue);
-            }
-        });
-    }
+    Object.defineProperty(model.prototype, name, {
+        enumerable: !def.private,
+        configurable: def.type == "any",
+        get: function() {
+            return genericGetter.call(this, def, name);
+        },
+        set: function(inValue) {
+            return genericSetter.call(this, def, name, inValue);
+        }
+    });
 }
 
+// TODO: See about changing this to a hash instead of a function
 function getValidator(type) {
     switch(type) {
         case "integer":
@@ -277,8 +282,13 @@ Model.extend = function(className, modelSpec, functionSpec) {
     modelInit = true;
 
     var constructor= makeCtor(className);
-
     constructor.prototype = new this();
+
+
+    if (!privateInit) {
+        var privateConstructor = makeCtor("_" + m_.camelCase(className, true) + "Private");
+        privateConstructor.prototype = new PrivateModel();
+    }
 
 
     if (functionSpec) {
@@ -290,20 +300,46 @@ Model.extend = function(className, modelSpec, functionSpec) {
 
     }
 
+    var fullSpec = this.$meta ? m_.extend({}, this.$meta.properties, modelSpec) : modelSpec;
     constructor.$meta = {
-        properties: modelSpec,
+        properties: fullSpec,
         superclass: this,
-        defaults: {}
+        defaults: this.$meta ? m_.clone(this.$meta.defaults) : {},
+        privateClass: privateConstructor
     };
 
+    // parent method properties should not need to be defined
     m_.each(modelSpec, function(inValue, inKey) {
-        defineProperty(constructor, inKey, inValue);
+        if (!inValue.private) {
+            defineProperty(constructor, inKey, inValue);
+        }
         if ("defaultValue" in inValue) constructor.$meta.defaults[inKey] = inValue.defaultValue;
-    });
+    }, this);
+    m_.each(fullSpec, function(inValue, inKey) {
+        if (inValue.private) {
+            defineProperty(constructor.$meta.privateClass, inKey, inValue);
+        }
+    }, this);
+
     constructor.extend = Model.extend;
 
     Object.seal(constructor.prototype);
     modelInit = false;
     return constructor;
 };
+Model.$meta = {
+    properties: {
+        name: "constructor",
+        type: "any" // TODO: Support function
+    },
+    superclass: null,
+    defaults: {}
+};
 
+privateInit = true;
+var PrivateModel = Model.extend("PrivateModel", {}, {
+    constructor: function() {
+        this.__values.__notinitialized = true;
+    }
+});
+privateInit = false;

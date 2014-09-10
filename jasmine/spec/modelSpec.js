@@ -6,6 +6,11 @@ describe("Model", function() {
             firstName: {
                 type: "string"
             },
+            middleName: {
+                type: "string",
+                private: true, // Nobody knows my middle name!
+                defaultValue: "Homer"
+            },
             lastName: {
                 type: "string"
             },
@@ -61,6 +66,19 @@ describe("Model", function() {
             };
             expect(f).toThrow();
         });
+
+        it("middleName (private) should be settable", function() {
+            p.__privates.middleName = "fred";
+            expect(p.__privates.middleName).toEqual("fred");
+        });
+
+        it("middleName (private) should reject non-string values", function() {
+            var f = function() {
+                p.__privates.middleName = 5;
+            };
+            expect(f).toThrow();
+        });
+
 
         it("Date types should be settable with autoAdjust enabled", function() {
             var d1 = new Date(), d2 = new Date(0);
@@ -171,15 +189,18 @@ describe("Model", function() {
             var d = new Date();
             var p = new Person({
                 firstName: "Fred",
+                middleName: "Flinstone",
                 birthDate: d,
                 age: 5,
                 rankings: {a: 5}
             });
             expect(p.firstName).toEqual("Fred");
+            expect(p.__privates.middleName).toEqual("Flinstone");
             expect(p.birthDate).toEqual(d);
             expect(p.age).toEqual(5);
             expect(p.rankings).toEqual({a:5});
         });
+
 
         it("Test custom constructor", function() {
             var result = false;
@@ -246,14 +267,50 @@ describe("Model", function() {
             expect(p.fred).toBe(undefined);
         });
 
-        it("Should use the defaultValue if none is supplied", function() {
+        it("Should use the defaultValues if none is supplied", function() {
+
             var p = new Person();
             expect(p.age).toEqual(13);
 
+            expect(p.__privates.middleName).toEqual("Homer");
+
             p = new Person({age: 20});
             expect(p.age).toEqual(20);
+        });
+
+        it("Should use the defaultValue if none is supplied for private property", function() {
+            genericPersonDef.myProtectedData = {
+                private: true,
+                type: "string",
+                defaultValue: "Howdy"
+            };
+            var Person = m_.Model.extend("Person", genericPersonDef);
+            var p = new Person();
+            expect(p.__privates.myProtectedData).toEqual("Howdy");
+        });
+
+        it("It should support defaultValue from the parent class", function() {
+            genericPersonDef.myProtectedData = {
+                private: true,
+                type: "string",
+                defaultValue: "Howdy"
+            };
+            var Person = m_.Model.extend("Person", genericPersonDef);
+
+            GradStudent = Person.extend("GradStudent", {
+                yearInSchool: {
+                    type: "integer",
+                    private: true,
+                    defaultValue: 3
+                }
+            });
+
+            var p = new GradStudent();
+            expect(p.__privates.myProtectedData).toEqual("Howdy");
+            expect(p.__privates.yearInSchool).toEqual(3);
 
         });
+
 
         it("Should let us initialize but not change readonly properties", function() {
             var p = new Person();
@@ -309,7 +366,9 @@ describe("Model", function() {
         });
     });
 
-    describe("Create Subclasses", function() {
+
+
+        describe("Create Subclasses", function() {
         var Person, GradStudent, Newbie, runs, result2;
         beforeEach(function() {
             result = "";
@@ -384,6 +443,8 @@ describe("Model", function() {
         });
 
     });
+
+
 
     describe("Test Events", function() {
         it("Basic events should work", function() {
@@ -461,6 +522,7 @@ describe("Model", function() {
         });
     });
 
+
     describe("Array properties", function() {
         beforeEach(function() {
             genericPersonDef.scores = {
@@ -478,139 +540,14 @@ describe("Model", function() {
                 p.scores = 9;
             }).toThrowError("scores: must be an array");
 
+            expect(function() {
+                p.scores = ["Fred"];
+            }).toThrowError("scores: Fred is of type string not number");
+
             p.scores = [];
             expect(p.scores).toEqual([]);
         });
     });
 
-    describe("Protected Properties", function() {
-        it("It should allow for getting and setting of protected properties", function(){
-            genericPersonDef.myProtectedData = {
-                protected: true,
-                type: "string"
-            };
-            var Person = m_.Model.extend("Person", genericPersonDef);
-            var getter, setter;
-            var p = new Person({
-                onProtectedInit: function(inGetter, inSetter) {
-                    getter = inGetter;
-                    setter = inSetter;
-                }
-            });
-
-            expect(function() {
-                setter("myProtectedData", 55);
-            }).toThrow();
-
-            setter("myProtectedData", "Hello There");
-
-            expect(getter("myProtectedData")).toEqual("Hello There");
-        });
-
-        it("It should disallow use of the wrong accessor", function(){
-            genericPersonDef.myProtectedData = {
-                protected: true,
-                type: "string"
-            };
-            var Person = m_.Model.extend("Person", genericPersonDef);
-            var getter, setter;
-            var p = new Person({
-                onProtectedInit: function(inGetter, inSetter) {
-                    getter = inGetter;
-                    setter = inSetter;
-                }
-            });
-
-            expect(function() {
-                getter("firstName");
-            }).toThrowError("firstName: Not a protected property");
-
-            expect(function() {
-                setter("firstName", "Meeps");
-            }).toThrowError("firstName: Not a protected property");
-        });
-
-        xit("It should support setting privates within the constructor", function(){
-            genericPersonDef.myProtectedData = {
-                protected: true,
-                type: "string"
-            };
-            var Person = m_.Model.extend("Person", genericPersonDef);
-            var getter, setter;
-            var p = new Person({
-                myProtectedData: "Fred",
-                onProtectedInit: function(inGetter, inSetter) {
-                    getter = inGetter;
-                    setter = inSetter;
-                }
-            });
-            expect(getter("myProtectedData")).toEqual("Fred");
-        });
-
-        xit("It should support the defaultValue during initialization", function(){
-            genericPersonDef.myProtectedData = {
-                protected: true,
-                type: "string",
-                defaultValue: "Fred"
-            };
-            var Person = m_.Model.extend("Person", genericPersonDef);
-            var getter, setter;
-            var p = new Person({
-                onProtectedInit: function(inGetter, inSetter) {
-                    getter = inGetter;
-                    setter = inSetter;
-                }
-            });
-            expect(getter("myProtectedData")).toEqual("Fred");
-        });
-
-        xit("It should provide reasonable means of definine an object and letting that object access its own protected data", function() {
-            genericPersonDef.income = {
-                type: "number",
-                protected: true
-            };
-            var Person = m_.Model.extend("Person", genericPersonDef);
-            var getter, setter;
-            var p = new Person({
-                onProtectedInit: function(inGetter, inSetter) {
-                    getter = inGetter;
-                    setter = inSetter;
-                },
-                incrementIncome: function() {
-                    setter("income", 1 + getter("income"));
-                }
-            });
-
-            setter("income", 50);
-            expect(getter("income")).toEqual(50);
-            p.incrementIncome();
-            expect(getter("income")).toEqual(51);
-            p.incrementIncome();
-            expect(getter("income")).toEqual(52);
-        });
-
-        xit("It should allow an object to create an array of objects and manage access to all of their private data", function() {
-            genericPersonDef.income = {
-                type: "number",
-                protected: true
-            };
-            genericPersonDef.children = {
-                type: "[Person]",
-                protected: true
-            };
-            var Person = m_.Model.extend("Person", genericPersonDef);
-            var getter, setter;
-            var p = new Person({
-                onProtectedInit: function(inGetter, inSetter) {
-                    getter = inGetter;
-                    setter = inSetter;
-                },
-                incrementIncome: function() {
-                    setter("income", 1 + getter("income"));
-                }
-            });
-            expect(true).toBe(false);
-        });
-    });
 
 });
