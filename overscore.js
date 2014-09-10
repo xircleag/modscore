@@ -44,6 +44,12 @@
   // Current version.
   _.VERSION = '1.0.0';
 
+  /**
+   * Turns strings such as "xxx_yyy_zzz" into "xxxYyyZzz".
+   * @param {string} str - The string to transform
+   * @param {boolean} [firstLetter=false]
+   * @returns {string}
+   */
   _.camelCase = function(str, firstLetter) {
     if (firstLetter) str = str.charAt(0).toUpperCase() + str.substring(1);
     return str.replace(/_(.)/g, function(inValue) {
@@ -177,7 +183,7 @@
     var timeout, args, context, timestamp, result;
 
     var later = function() {
-      var last = _.now() - timestamp;
+      var last = Date.now() - timestamp;
 
       if (last < wait && last > 0) {
         timeout = setTimeout(later, wait - last);
@@ -193,7 +199,7 @@
     return function() {
       context = this;
       args = arguments;
-      timestamp = _.now();
+      timestamp = Date.now();
       var callNow = immediate && !timeout;
       if (!timeout) timeout = setTimeout(later, wait);
       if (callNow) {
@@ -274,6 +280,7 @@
 
   // Return a sorted list of the function names available on the object.
   // Aliased as `methods`
+  /*
   _.functions = function(obj) {
     var names = [];
     for (var key in obj) {
@@ -281,7 +288,7 @@
     }
     return names.sort();
   };
-
+*/
 
 
   // Extend a given object with all the properties in passed-in object(s).
@@ -360,12 +367,6 @@
   _.isFunction = function(obj) {
     return typeof obj == 'function' || false;
   };
-
-  // A (possibly faster) way to get the current timestamp as an integer.
-  _.now = Date.now || function() {
-    return new Date().getTime();
-  };
-
 
     // Returns a predicate for checking whether an object has a given set of `key:value` pairs.
   _.matches = function(attrs) {

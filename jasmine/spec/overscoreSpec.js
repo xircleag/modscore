@@ -298,9 +298,11 @@ describe("Miniunderscore", function() {
                 });
 
                 it("Passes all arguments", function() {
+                    console.log("Start Pas");
                     m_.defer(timerCallback, "fred", 5, "john", 2);
                     jasmine.clock().tick(1);
                     expect(timerCallback.calls.argsFor(0)).toEqual(["fred", 5, "john", 2]);
+                    console.log("Start Pas");
                 });
             });
 
@@ -313,7 +315,7 @@ describe("Miniunderscore", function() {
                 jasmine.clock().install();
                 jasmine.clock().mockDate(new Date())
                 debounceCallback = jasmine.createSpy("timerCallback");
-                spyOn(m_, "now").and.callFake(function() {
+                spyOn(Date, "now").and.callFake(function() {
                     return new Date().getTime();
                 });
             });
@@ -491,6 +493,7 @@ describe("Miniunderscore", function() {
             });
         });
 
+/*
         describe("m_.functions", function() {
             it("Returns all functions whether set in prototype or constructor", function() {
                 expect(m_.functions(objF)).toEqual(["c","dFunc"]);
@@ -502,7 +505,7 @@ describe("Miniunderscore", function() {
                 expect(m_.functions(objG)).toEqual(["c","dFunc", "dog", "g", "hFunc"]);
             });
         });
-
+*/
         describe("m_.extend", function() {
             var objH;
             beforeEach(function() {
