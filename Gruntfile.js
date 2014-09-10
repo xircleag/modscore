@@ -36,10 +36,9 @@ module.exports = function(grunt) {
 			}
 		},
 		watch: {
-		  	files: ['<%= jasmine.overscore.src %>', '<%= jasmine.overscore.options.specs %>'],
-		  	tasks: ['jasmine', 'uglify']
+		  	files: ['<%= jasmine.overscore.src %>', '<%= jasmine.overscore.options.specs %>', "Gruntfile.js"],
+		   	tasks: ['concat', 'jasmine'] /* Concat lets us test in our local dev env and won't get done if we run/fail tests first. */
 		}
-
 	});
 
 	grunt.loadNpmTasks('grunt-contrib-jasmine');
