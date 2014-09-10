@@ -19,7 +19,7 @@
 // var m_ = require("./miniunderscore.js");
 
 // TODO: Find a way to disable/enable private getters/setters; enabler.lockPrivates(); enabler.unlockPrivates();
-// TODO: readOnly private properties are not yet supported
+// TODO: JsDoc / github Readme
 // TODO: Add listeners to constructor?
 // TODO: Support for private collections (manages the private accessors for the array or hash)
 // TODO: Support for private methods?
@@ -76,7 +76,7 @@ var Model = function(params) {
 
             this.constructor.apply(this, arguments);
             delete this.__values.__notinitialized;
-            delete this.__privates.__notinitialized;
+            this.__privates.__values.__notinitialized = false;
         }
         Object.seal(this);
     }
@@ -253,9 +253,12 @@ Model.prototype.constructor = function() {
 };
 
 Model.prototype.$super = function $super() {
-    var f = $super.caller.$super;
+    var caller = $super.caller;
+    var f = caller.$super;
+    var args;
     if (f) {
-        f.apply(this, arguments);
+        args = arguments.length ? arguments : caller.arguments;
+        return f.apply(this, args);
     }
 }
 

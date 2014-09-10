@@ -321,6 +321,21 @@ describe("Model", function() {
 
             p = new Person({personId: 5});
             expect(p.personId).toEqual(5);
+
+            genericPersonDef.personPrivateId = {
+                type: "number",
+                readOnly: true,
+                private: true,
+                defaultValue: 105
+            };
+            var Person2 = m_.Model.extend("Person2", genericPersonDef);
+            p = new Person2({personPrivateId: 55});
+            expect(p.__privates.personPrivateId).toEqual(55);
+            p = new Person2({});
+            expect(p.__privates.personPrivateId).toEqual(105);
+
+            p.__privates.personPrivateId = 205;
+            expect(p.__privates.personPrivateId).toEqual(105);
         });
 
         it("Should support required properties", function() {
@@ -368,7 +383,7 @@ describe("Model", function() {
 
 
 
-        describe("Create Subclasses", function() {
+    describe("Create Subclasses", function() {
         var Person, GradStudent, Newbie, runs, result2;
         beforeEach(function() {
             result = "";
@@ -385,6 +400,9 @@ describe("Model", function() {
                 runTest2: function(){
                     result += "Person";
                     this.$super();
+                },
+                runTest3: function(a,b,c) {
+                    return (this.$super() || "") +  a + ":" + b + ":" + c;
                 }
             });
             GradStudent = Person.extend("GradStudent", {
@@ -402,6 +420,9 @@ describe("Model", function() {
                 runTest: function() {
                     result += "GradStudent";
                     this.$super();
+                },
+                runTest3: function(a,b,c) {
+                    return (this.$super("a","b","c") || "") +  a + ":" + b + ":" + c;
                 }
             });
 
@@ -417,6 +438,10 @@ describe("Model", function() {
                 runTest2: function(){
                     result += "Newbie";
                     this.$super();
+                },
+                runTest3: function(a,b,c) {
+                    debugger;
+                    return (this.$super() || "") +  a + ":" + b + ":" + c;
                 }
             });
 
@@ -442,6 +467,12 @@ describe("Model", function() {
             expect(result2).toEqual("heyho");
         });
 
+        it("Super method should handle original arguments and new arguments and return results", function() {
+            var newbie = new Newbie();
+            var result = newbie.runTest3(1,2,3);
+            expect(result).toEqual("a:b:c1:2:31:2:3");
+
+        });
     });
 
 
