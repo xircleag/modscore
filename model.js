@@ -133,7 +133,7 @@
         kermit.firstName = 55;
         > Error!
 
-    * *NOTE: To disable validation, use a type of "any" instead of "integer"*
+    * *NOTE: To disable validation, use a type of "any" instead of "string", "integer", etc.*
 
         // Object only allows those properties that are defined; no object hacking.
         // iq is not part of the class definition:
@@ -483,6 +483,16 @@
         return true;
     }
 
+    /* getInternalName generates a semi-random internal property name to make it a little harder to hack into
+     * our values object and bypass all setters/getters
+     */
+    var propPrefix = String(Math.random()).substring(2,6).split("").map(function(c) {
+        return String.fromCharCode("a".charCodeAt(0) + Number(c));
+    }).join("");
+    function getInternalName(name) {
+        return propPrefix + (name.length > 2 ? name.substring(2) + name.substring(0,2) : name);
+    }
+
     function genericGetter(def, caller, name) {
         if (def.private) {
             if (!isPrivateAllowed.call(this, caller)) {
@@ -490,7 +500,7 @@
                 return;
             }
         }
-        return this.__values[name];
+        return this.__values[getInternalName(name)];
     }
 
     function genericSetter(def, caller, name, inValue) {
@@ -505,7 +515,7 @@
         var altValue, adjuster, values = this.__values;
 
         /* Step 1: If readOnly property, only set it if we are in the constructor */
-        if (def.readOnly && !this.__values.__notinitialized) {
+        if (def.readOnly && !values.__notinitialized) {
             console.warn("Set " + name + " to " + inValue + " ignored; readOnly property");
             return;
         }
@@ -566,9 +576,10 @@
         }
 
         /* Step 6: Set the value */
-        var originalValue = values[name];
+        var internalName = getInternalName(name);
+        var originalValue = values[internalName];
         if (originalValue !== inValue) {
-            values[name] = inValue;
+            values[internalName] = inValue;
             this.trigger(name + ":changed", inValue, originalValue);
             this.trigger("changed", name, inValue, originalValue);
         }
@@ -752,6 +763,12 @@
             defaults: this.$meta ? m_.clone(this.$meta.defaults) : {},
             functions: fullFunc
         };
+
+        // Any third party dev can access person.__class.$meta.functions and add/remove stuff to it.
+        // So, freeze it.
+        m_.each(fullFunc, function(arrayOfFuncs) {Object.freeze(arrayOfFuncs);});
+        Object.freeze(fullFunc);
+
 
         // parent method properties should not need to be defined
         m_.each(propertySpec, function(inValue, inKey) {

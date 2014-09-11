@@ -32,7 +32,8 @@ describe("Model", function() {
             personId: {
                 type: "integer",
                 readOnly: true
-            }
+            },
+            z: {type: "string", defaultValue: "FRED!"}
         };
     });
 
@@ -49,10 +50,9 @@ describe("Model", function() {
 
         });
 
-        it("firstName should be settable, and should set Person.__values.firstName", function() {
+        it("firstName should be settable", function() {
             p.firstName = "fred";
             expect(p.firstName).toEqual("fred");
-            expect(p.__values.firstName).toEqual("fred");
         });
 
         it("firstName should reject non-string values", function() {
@@ -66,11 +66,9 @@ describe("Model", function() {
             var d1 = new Date(), d2 = new Date(0);
             p.birthDate = d1;
             expect(p.birthDate).toEqual(d1);
-            expect(p.__values.birthDate).toEqual(d1);
 
             p.birthDate = d2.getTime();
             expect(p.birthDate).toEqual(d2);
-            expect(p.__values.birthDate).toEqual(d2);
         });
 
         it("Date types should reject non-date values", function() {
@@ -90,10 +88,8 @@ describe("Model", function() {
             p.age = age1;
             p.percentile = percentile1;
             expect(p.age).toEqual(age1);
-            expect(p.__values.age).toEqual(age1);
 
             expect(p.percentile).toEqual(percentile1);
-            expect(p.__values.percentile).toEqual(percentile1);
         });
 
         it("Number types should reject non-number values", function() {
@@ -124,11 +120,9 @@ describe("Model", function() {
 
             p.isAlive = true;
             expect(p.isAlive).toEqual(true);
-            expect(p.__values.isAlive).toEqual(true);
 
             p.isAlive = false;
             expect(p.isAlive).toEqual(false);
-            expect(p.__values.isAlive).toEqual(false);
         });
 
         it("Boolean types should reject non-boolean values with autoAdjust disabled", function() {
@@ -144,7 +138,6 @@ describe("Model", function() {
             var o = {monday: 4, tuesday: 5, friday: 0};
             p.rankings = o;
             expect(p.rankings).toEqual(o);
-            expect(p.__values.rankings).toEqual(o);
         });
 
         it("Object types should reject non-object values", function() {
@@ -161,7 +154,6 @@ describe("Model", function() {
             m_.each(values, function(inValue) {
                 p.flex = inValue;
                 expect(p.flex).toEqual(inValue);
-                expect(p.__values.flex).toEqual(inValue);
             });
 
         });
