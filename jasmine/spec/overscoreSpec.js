@@ -430,7 +430,7 @@ describe("Miniunderscore", function() {
 
         describe("m_.has", function() {
             it("Properties defined in constructor or on object should return true", function() {
-                expect(m_.has(objG, "e")).toEqual(false);
+                expect(m_.has(objG, "e")).toEqual(true);
                 expect(m_.has({e: "fred"}, "e")).toEqual(true);
             });
 
