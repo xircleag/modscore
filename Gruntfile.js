@@ -10,7 +10,7 @@ module.exports = function(grunt) {
 	    	var tmpContents = grunt.file.read(path);
 	    	if (tmpContents.match(/START-GIT-README/)) {
 	    		tmpContents = tmpContents.replace(/^[\s\S]*?START-GIT-README([\s\S]*?)END-GIT-README[\s\S]*$/m, "$1");
-	    		tmpContents = tmpContents.replace(/^\s*\*/mg,"");
+	    		tmpContents = tmpContents.replace(/^\s*\* ?/mg,"");
 	    		contents += tmpContents;
 	    	}
 	    });
