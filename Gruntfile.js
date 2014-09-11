@@ -90,8 +90,8 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-contrib-concat');
 	grunt.loadNpmTasks('grunt-jsduck');
 
-  	grunt.registerTask('default', ['uglify', 'concat', 'jasmine', 'jsdoc', 'buildGitReadme']);
+  	grunt.registerTask('default', ['uglify', 'concat', 'jasmine', 'jsduck', 'buildGitReadme']);
 
-  	grunt.registerTask('jenkins', ['uglify', 'concat', 'jasmine', 'jsdoc', 'buildGitReadme']);
+  	grunt.registerTask('jenkins', ['uglify', 'concat', 'jasmine', 'jsduck', 'buildGitReadme']);
 
 };
