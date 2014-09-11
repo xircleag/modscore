@@ -1,27 +1,346 @@
+/* NOTE: THE # below is needed to startup markdown formatting */
 /**
- * Motivation for this library:
- * 1. Seal objects defined this way so that our library can provide
- *    third party developers with our objects, but those objects can
- *    not be modified except through our APIs. This is done by using seal() and having properties be readOnly.
- * 2. There can be no properties on an object except those which are defined for your object. No hacking of objects.
- *    This promotes design that documents everything about an object in the definition.
- *    It should promote better testability
- * 3. Validation on all properties. Properties are all typed, and any attempt to set in inappropriate value can be caught and handled.
- * 4. Support for proper setters/getters:  myobj.prop1 = "Fred" rather than myobj.setProp1("Fred"). Why
- *    is this preferred?  Because we don't know much about our third party developer users and their background.
- *    For the unknown developer, this is just plain simple.
- * 5. Support for private properties that can only be accessed by the creator of the object, but which provide the same
- *    validation and modeling as the public properties.
- */
+ * @class overscore.Model
+ * @author Michael Kantor
+ *
+ * # Motivation for this library:
+ * ### Robustness of a typed / declared language
+ *
+ * There have been many efforts at a more formal typed version of javascript.  These invariably
+ * seem to involve non-javascript syntax, non-javascript concepts and structures,
+ * and then the code gets compiled into javascript.
+ *
+ * This library is for those who love javascript,
+ * but want a more engineering friendly environment.  Enforcement of types does not depend upon
+ * third party developers using setters.  Calling *person.firstName = 5* will throw a type error
+ * if firstName has been defined to be a string.
+ *
+ * At this point in this library's evolution, all object properties are typed, method parameters are NOT typed.
+ *
+ * ### Developers can no longer muck up your API
+ * Objects are defined such that only the properties you define and type can be used.  As an API provider,
+ * you should have some confidence that people aren't mucking with your objects, arbitrarily attaching
+ * data to them.
+ *
+ * Why not let properties be declared whenever, wherever?
+ * - Self documenting designs are easier if all properties are defined up front.  Even private properties.
+ * - Javascript allows any and every module to make any change it wants to your objects.  Thats all good fun,
+ * but as an API provider, you'd probably much rather have some confidence that your objects are not in fact
+ * being arbitrarily changed.
+ *
+ * ### Your private properties really aught to be private
+ * In Javascript, the only way to have truely private variables is to NOT use prototypal properties, which in turn
+ * means that you can't use prototypal methods.  Which in turn means that if you create 10,000 instances,
+ * you have to recreate all of the properties and methods for each one.
+ *
+ * So, javascript developers make do with coding by convention;  this.__prettyPleaseDontTouchThisProperty = 5;
+ * Yeah.  Nobody would ever touch that property, right?  No... developers will do Whatever it seems like it
+ * might take to get their code to work.  Even if there are consequences later on.
+ *
+ * ### Your object oriented code really should be object oriented
+ * Yes, there are a number of frameworks out there for declaring classes, subclasses, calling parent methods, etc...
+ * This library provides all that object oriented goodness with all the behaviors described above.
+ *
+ * ### Inspirations and outright copying:
+ * - Ampersandjs: A lot of credit goes to ampersandjs, and their "State" object. It is a very subjective opinion that
+ * -- Their state object manages a lot more stuff than it needs to; children, collections, derivedProps, etc...
+ *    all very cool but not really what I need (ok, not what I need yet).
+ * -- Their state object does not appear to be a root object for an object oriented dev environment
+ * -- They do not (yet) have all of the behaviors needed to define/modify property behaviors.
+ *
+ * - Backbone: Directly copies from Backbone standalone events (stripping out some of the unused code)
+ * - Sencha: Their adjust methods on their setters directly inspired part of how properties are set
+ * - Javascript: For providing Object.defineProperty() and Object.seal().
+ *
+ * ## How to use it
+ * ### Step 1: Add the script to your page:
+ *
+ *    &lt;script type="text/javascript" src='overscore.min.js'>&lt;/script>
+ *
+ * ### Step 2: In your js folder, define some objects.
+ * For simplicity, we'll assume that they are all defined in the same file
+ *
+        // Define a base class using the Global extend method
+        var Animal = m_.Model.extend(
+            // Argument 1: Name of the class
+            "Animal",
+
+            // Argument 2: An object defining all of your properties
+            {
+                firstName: {
+                    type: "string"
+                },
+                age: {
+                    type: "integer"
+                }
+            },
+
+            // Argument 3 (optional): An object defining all methods for your class
+            {
+                celebrateBirthday: function() {
+                    this.age++;
+                }
+            }
+        );
+
+        // Create an instance of a Person.
+        var kermit = new Person({
+            firstName: "Kermit",
+            age: 15
+        });
+
+        // Directly access declared properties on the object
+        console.log(kermit.firstName);
+        > "Kermit"
+
+        console.log(kermit.age)
+        > 15
+
+        // Execute your methods on the object, and access the result
+        kermit.celebrateBirthday();
+        console.log(kermit.age);
+        > 16
+
+        // Directly set properties, and have them validated and throw errors if incorrectly typed
+        kermit.firstName = "The Frog";
+        console.log(kermit.firstName);
+        > "The Frog"
+
+        kermit.firstName = 55;
+        > Error!  NOTE: To disable validation, use a type of "any" instead of "integer"
+
+        // Object only allows those properties that are defined; no object hacking:
+        kermit.iq = 185;
+        console.log(kermit.iq);
+        > undefined
+
+    * ### Step 3: You can also define subclasses of your class
+    * Rather than use the global extend method, use extend method built into your parent class.
+    * The subclass inherits all properties and methods defined on the parent.
+
+        var Person = Animal.extend("Person", {
+            lastName: {
+                type: "string"
+            },
+            hasRecentBirthday: {
+                type: "boolean"
+            }
+        },
+        {
+            celebrateBirthday: function() {
+                this.$super();
+                this.hasRecentBirthday = true;
+            }
+        });
+
+    * The call to this.$super() calls the parent method, which updates this.age.
+
+        var kermit = new Person({age: 3, hasRecentBirthday: false, firstName: "Kermit"});
+        p.celebrateBirthday();
+
+        console.log(kermit.age)
+        > 4
+        console.log(kermit.hasRecentBirthday)
+        > true
+
+    * ### Step 4: Add some Private Properties
+    * As part of your property definition, you can specify which properties are private (default is public).
+    * Private properties have exactly the same behaviors as public properties (validation, etc...) but also
+    * provide some protection
+
+        var Animal = m_.Model.extend("Animal", {
+            firstName: {
+                type: "string"
+            },
+            age: {
+                type: "integer",
+                private: true // Some people don't like their age to be common knowledge...
+            }
+        });
+
+        var kermit = new Animal({firstName: "Kermit", age: 15});
+
+        // Private properties can not be accessed directly
+        console.log(kermit.age);
+        > undefined
+
+        // Private properties can be accessed using the object's Privates
+        console.log(kermit.__privates.age)
+        > 15
+
+    * At this point, any knowledgeable developer can still find, view and modify your private properties.
+    * For APIs that require added security, you can disable/enable access to private data
+
+        var locker = m_.getPrivateModelLocker();
+        locker(true);
+
+    * The getPrivateModelLocker method can only be called once; it deletes itself after its been called,
+    * and can not be restored until the app is reloaded.  Only one caller gets access to the locker,
+    * and that caller controls who to share that locker with.
+    *
+    * What does the locker do?
+
+        console.log(kermit.__privates.age)
+        > 15
+
+        locker(true); // lock all private data
+        console.log(kermit.__privates.age)
+        > undefined
+
+        kermit.__privates.age = 25;
+        console.log(kermit.__privates.age)
+        > undefined
+
+        locker(false); // unlock all private data
+        console.log(kermit.__privates.age)
+        > 15
+
+    * ### Step 5: Further refine your property definitions
+    * - *type*: A string specifying the type: integer, double, string, boolean, object, Date, Person, Animal.
+    * Type may also be an array: [integer], [double], [string], [Person], etc...
+
+            {
+                scores: {
+                    type: "[number]"
+                },
+                grade: {
+                    type: "string"
+                },
+                lastTest: {
+                    type: "Date"
+                }
+            }
+
+    * - *required*: A boolean indicating if the value is required.  Will cause error to be thrown any time you create an object without that property.
+    * Will throw an error any time you set the value of that property to null, undefined or "".
+
+            firstName: {
+                type:  "string",
+                required: true
+            }
+
+    * - *private*: A boolean indicating that the property is a private property
+    *
+    * - *autoAdjust*: A boolean indicating that a property should adjust its value to resolve validation errors.
+    *    For boolean fields, if this is true, it will convert truthy/falsy values to true/false.
+    *    For dates, it will attempt to convert strings and numbers to dates.
+    *    For numbers, it will test to see if a string contains a number ("5" yes, "5fred" no)
+
+            age: {
+                type: "integer",
+                autoAdjust: true
+            }
+
+    * - *readOnly*: A boolean indicating if the property can be changed after the constructor has completed.
+
+    * - *defaultValue*: The default value to use for this property if none is specified in the constructor
+
+        var Animal = m_.Model.extend("Animal", {
+            age: {
+                type: "integer",
+                defaultValue: 1
+            }
+        });
+
+        var kermit = new Animal({});
+        console.log(kermit.age);
+        > 1
+
+        ver piggy =new Animal({age: 90});
+        console.log(piggy.age);
+        > 90
+
+    * ### Step 6: Add methods to refine property behaviors
+    *
+    * - *Adjuster*: You can add an adjuster method for your property; your function must be named
+    * adjust<cammelCase(propertyName)>; the first letter of your propertyName will always be upperCased.
+    * If the adjuster does not return a value, then the property will be set with the original value.
+    * If the adjuster returns a value, then the property will be set to the returned value.
+    * -- The adjuster is run BEFORE validation
+    * -- The adjuster will cause autoAdjust to be ignored.
+
+        var Animal = m_.Model.extend("Animal", {
+            first_name: {
+                type: "string"
+            }
+        }, {
+            // If the name evaluates to falsy, use the previous name or "Fred".
+            adjustFirstName: function(inValue) {
+                if (!inValue) {
+                    if (this.first_name) {
+                        return this.first_name;
+                    } else {
+                        return "Fred";
+                    }
+                }
+            }
+        });
+
+    * - *Validator*: You can add a custom validator for your property. This is run after the standard
+    * validator that comes with your property type.  So if your property type is "integer", and you pass in a string,
+    * your custom validator will not be reached.  Use a type of "any" to disable automatic validation and only use your
+    * validator.  your function must be named
+    * validateSet<cammelCase(propertyName)>; the first letter of your propertyName will always be upperCased.
+    * If your validator returns a value, its assumed to be an error message, and a complete error message isis
+    * assembled and thrown for you.
+    *
+    *DO NOT THROW AN ERROR; RETURN A STRING!
+
+        var Animal = m_.Model.extend("Animal", {
+            first_name: {
+                type: "integer",
+                defaultValue: 1
+            }
+        }, {
+            // Accepts all names except "Kermit"
+            validateSetFirstName: function(inValue) {
+                if (inValue == "Kermit") {
+                    return "There can be only one!" // immortal frog
+                }
+            }
+        });
+
+    * ### Step 7: Setup event handlers if needed
+
+         kermit.on("age:changed", function(newAge, oldAge) {
+           if (newAge > oldAge) console.log("I'm getting Old!");
+         }, this);
+
+         kermit.age = 55;
+         > I'm getting Old!
+
+    * Every defined property will fire an event when its value changed; and you can subscribe using
+    * object.on("<propertyName>:changed", callback, context);
+    *
+    * You can also subscribe to ALL changes on an object:
+
+        kermit.on("changed", function(propertyName, newValue, oldValue) {
+            console.log(propertyName + " is now " + newValue);
+        }, this);
+
+        kermit.firstName = "piggy";
+        > firstName is now piggy
+
+        kermit.age = 50;
+        > age is now 50
+    *
+    */
+
 
 // Compile with
 // > watchify model.js -d -o build/model.js
 // var m_ = require("./miniunderscore.js");
 
-// TODO: Find a way to disable/enable private getters/setters; enabler.lockPrivates(); enabler.unlockPrivates();
+// TODO: Need to evolve the concept of setLock().  Suggestion:
+//       1. All methods passed in when defining a new object are automatically wrapped in setLock(false); f(); setLock(true);
+//       2. Instead of lock being true/false, should be a number so we can increment it and decrement it as we go from method to method
+//       3. Events should be fired asynchronously so that we do not directly call third party code while the locks are disabled.
+//          Events can be called via m_.defer() to wait 1ms before firing.
 // TODO: JsDoc / github Readme
 // TODO: Add listeners to constructor?
 // TODO: Support for private methods?
+// TODO: Consider: Can we make accessing __privates go through a getter, have it check the caller, and only allow the caller if
+// the caller is a method of "this"?
 (function() {
     var modelInit = false, privateInit = false;
     var privatesLocked = false;
@@ -38,6 +357,7 @@
         return setLock;
     };
 
+
     var Model = function(params) {
         if (!modelInit) {
                 this.__values = {
@@ -51,10 +371,12 @@
                 var defs = this.__class.$meta.properties;
                 if (params) {
                     m_.each(params, function(value, name) {
-                        if (defs[name].private) {
-                            this.__privates[name] = value;
-                        } else {
-                            this[name] = value;
+                        if (defs[name]) {
+                            if (defs[name].private) {
+                                this.__privates[name] = value;
+                            } else {
+                                this[name] = value;
+                            }
                         }
                     }, this);
                 }
@@ -87,7 +409,7 @@
                     }
                 }, this);
 
-                this.constructor.apply(this, arguments);
+                this.init.apply(this, arguments);
                 delete this.__values.__notinitialized;
                 this.__privates.__values.__notinitialized = false;
             }
@@ -107,6 +429,16 @@
     }
 
     function genericSetter(def, name, inValue) {
+/*
+        if (def.private) {
+            var caller = genericSetter.caller.caller;
+            var callerFuncName = caller.$name;
+            if (!callerFuncName || !this[callerFuncName] || this[callerFuncName] != this.__class.prototype[callerFuncName]) {
+                console.warn(name + ": Private property accessed from context that is not a method of the object");
+                return;
+            }
+        }
+        */
         if (this instanceof PrivateModel && privatesLocked) return;
         var altValue, adjuster, values = this.__values;
 
@@ -135,7 +467,7 @@
         if (inValue === undefined) inValue = null;
 
         /* Step 4: Support required fields */
-        if (def.required && inValue === null) throw new Error(name + ": is required");
+        if (def.required && (inValue === null || inValue === "")) throw new Error(name + ": is required");
 
         /* Step 5: Throw errors on receiving invalid values */
         var validator = getValidator(def.type), validatorResult;
@@ -155,7 +487,13 @@
             }
             if (validatorResult) throw new Error(name + ": " + validatorResult);
         } else if (inValue !== null && def.type != "any") {
-            if (({}).toString.call(inValue) != "[object " +  def.type + "]") throw name + ": must be of type " + def.type;
+            if (classRegistry[def.type]) {
+                if (!(inValue instanceof classRegistry[def.type])) {
+                    throw name + ": must be of type " + def.type;
+                }
+            } else if (({}).toString.call(inValue) != "[object " +  def.type + "]") {
+                throw name + ": must be of type " + def.type;
+            }
         }
 
         /* Step 6: Run custom validator */
@@ -170,6 +508,7 @@
         if (originalValue !== inValue) {
             values[name] = inValue;
             this.trigger(name + ":changed", inValue, originalValue);
+            this.trigger("changed", name, inValue, originalValue);
         }
 
     }
@@ -191,7 +530,7 @@
 
     // TODO: See about changing this to a hash instead of a function
     function getValidator(type) {
-        switch(type) {
+        switch(type.toLowerCase()) {
             case "integer":
             case "[integer]":
                 return validateSetInteger;
@@ -263,10 +602,27 @@
         if (result && !isNaN(result.getTime())) return result;
     };
 
-    /* Expected to be overridden by subclasses */
-    Model.prototype.constructor = function() {
+    /**
+     * Every Class can provide a init method.  This one is just a place holder
+     * @method init
+     */
+    Model.prototype.init = function() {
     };
 
+    /**
+     * Call the parent class method.  If there is no parent class method, does nothing.
+     * @method $super
+     * @example
+     * // Automatically passes howMuch and airQuality to the parent method
+     * Person.prototype.breath = function(howMuch, airQuality) {
+     *     this.$super();
+     * }
+     *
+     * // Passes only the values specifed to the parent method
+     * Person.prototype.breath = function(howMuch, airQuality) {
+     *     this.$super(howMuch, "truely awful");
+     * }
+     */
     Model.prototype.$super = function $super() {
         var caller = $super.caller;
         var f = caller.$super;
@@ -284,24 +640,25 @@
         return eval("function " + name + "(){this.__class = " + name + "; Model.apply(this, arguments);}; " + name);
     }
 
-    // modelSpec is a hash of properties:
-    // {
-    //      prop1: {
-    //          type: "integer", // REQUIRED: one of "integer", "double", "string", "boolean", "object", or any object type: "Date", "MyModel".  Can also be "[integer]", "[string]", etc...
-    //          required: true, // Default is false; if true, throws error on creating new object that fails to specify a value; throws error on calling setter with undefined/null.
-    //          protected: true,  // Default is false; if true, then this.prop1 will not be available
-    //          autoAdjust: true, // Default is false; if true, boolean values will use truthiness; numbers will accept stringified numbers, etc...
-    //          readOnly: false // Default is false; if true, this property can only be set during initialization
-    //      },
-    //      prop2: {...}
-    // }
 
-    Model.extend = function(className, modelSpec, functionSpec) {
+    /**
+     * Define a new class, which will contain the specified properties and methods.
+     *
+     * @static
+     * @method extend
+     * @param {String} className - Name of the class; currently this is used solely
+     *                 for debugging.  The name you give determines how instances of the class show up in the debugger.
+     * @param {Object} propertySpec - Specification for the properties; see Model documentation for details and examples
+     * @param {Object} [functionSpec] - Hash of methods for your class
+     * @returns {Function} - Returns a class definition which can be used to create instances of the class
+     */
+    var classRegistry = {};
+    Model.extend = function(className, propertySpec, functionSpec) {
         modelInit = true;
 
         var constructor= makeCtor(className);
         constructor.prototype = new this();
-
+        classRegistry[className] = constructor;
 
         if (!privateInit) {
             var privateConstructor = makeCtor("_" + m_.camelCase(className, true) + "Private");
@@ -311,23 +668,24 @@
 
         if (functionSpec) {
             m_.each(functionSpec, function(func, name) {
-                func.name = name; // needed for $super() to find the parent method
+                func.$name = name; // Used to verify private properties are accessed by object methods
                 func.$super = constructor.prototype[name];
                 constructor.prototype[name] = func;
             });
-
         }
 
-        var fullSpec = this.$meta ? m_.extend({}, this.$meta.properties, modelSpec) : modelSpec;
+        var fullSpec = this.$meta ? m_.extend({}, this.$meta.properties, propertySpec) : propertySpec;
+        var fullFunc  = this.$meta ? m_.extend({}, this.$meta.functions, functionSpec) : functionSpec;
         constructor.$meta = {
             properties: fullSpec,
             superclass: this,
             defaults: this.$meta ? m_.clone(this.$meta.defaults) : {},
-            privateClass: privateConstructor
+            privateClass: privateConstructor,
+            functions: fullFunc
         };
 
         // parent method properties should not need to be defined
-        m_.each(modelSpec, function(inValue, inKey) {
+        m_.each(propertySpec, function(inValue, inKey) {
             if (!inValue.private) {
                 defineProperty(constructor, inKey, inValue);
             }
@@ -351,7 +709,8 @@
             type: "any" // TODO: Support function
         },
         superclass: null,
-        defaults: {}
+        defaults: {},
+        functions: {}
     };
 
     privateInit = true;

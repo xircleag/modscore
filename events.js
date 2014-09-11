@@ -19,6 +19,7 @@
  * (c) 2013 Nicolas Perriault
  *
  * MODIFIED BY Michael: Removes miniscore
+ * @class overscore.Events
  */
 /* global exports:true, define, module */
 (function() {

@@ -249,7 +249,7 @@ describe("Miniunderscore", function() {
                 return input + value++;
             }
         };
-
+/*
         describe("m_.memoize", function() {
             it("Is only called once", function() {
                 spyOn(obj, "f");
@@ -277,7 +277,7 @@ describe("Miniunderscore", function() {
 
             });
         });
-
+*/
         describe("Timer Functions", function() {
             var timerCallback;
 
@@ -493,7 +493,6 @@ describe("Miniunderscore", function() {
             });
         });
 
-/*
         describe("m_.functions", function() {
             it("Returns all functions whether set in prototype or constructor", function() {
                 expect(m_.functions(objF)).toEqual(["c","dFunc"]);
@@ -505,7 +504,7 @@ describe("Miniunderscore", function() {
                 expect(m_.functions(objG)).toEqual(["c","dFunc", "dog", "g", "hFunc"]);
             });
         });
-*/
+
         describe("m_.extend", function() {
             var objH;
             beforeEach(function() {

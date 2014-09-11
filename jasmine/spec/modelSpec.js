@@ -45,7 +45,11 @@ describe("Model", function() {
         var Person, p;
 
         beforeEach(function() {
-            Person = m_.Model.extend("Person", genericPersonDef);
+            Person = m_.Model.extend("Person", genericPersonDef, {
+                setMiddleName: function(inName) {
+                    this.__privates.middleName = inName;
+                }
+            });
             p = new Person({});
         });
 
@@ -68,7 +72,9 @@ describe("Model", function() {
         });
 
         it("middleName (private) should be settable", function() {
-            p.__privates.middleName = "fred";
+            debugger;
+            p.setMiddleName("fred");
+            //p.__privates.middleName = "fred";
             expect(p.__privates.middleName).toEqual("fred");
         });
 
@@ -184,6 +190,28 @@ describe("Model", function() {
 
         });
 
+        it("Custom types should be settable", function() {
+            genericPersonDef.parent = {
+                type: "Person"
+            }
+            var Person = m_.Model.extend("Person", genericPersonDef);
+
+            var kermit = new Person();
+
+            var babyKermit = new Person({parent: kermit});
+
+            expect(babyKermit.parent).toBe(kermit);
+            expect(function() {
+                babyKermit.parent = 5;
+            }).toThrow();
+
+            expect(function() {
+                babyKermit.parent = {};
+            }).toThrow();
+
+            babyKermit.parent = babyKermit;
+        });
+
 
         it("Accept all values via constructor", function() {
             var d = new Date();
@@ -202,19 +230,28 @@ describe("Model", function() {
         });
 
 
-        it("Test custom constructor", function() {
+        it("Test custom init", function() {
             var result = false;
             var Dog = m_.Model.extend("Dog", genericPersonDef, {
-                constructor: function(inargs) {
+                init: function(inargs) {
                     result = true;
                 }
             });
             var d = new Dog();
             expect(result).toEqual(true);
+debugger;
+            var Poodle = Dog.extend("Poodle", {}, {
+                init: function(params, a, b) {
+                    expect(params).toEqual({a:5});
+                    expect(a).toEqual(8);
+                    expect(b).toEqual("Fred");
+                }
+            });
+            var p = new Poodle({a:5}, 8, "Fred");
+
         });
 
         it("Test custom methods", function() {
-
             var Dog = m_.Model.extend("Dog", genericPersonDef, {
                 eatMe: function(inargs) {
                     this.isAlive = false;
@@ -370,7 +407,16 @@ describe("Model", function() {
                 required: true
             };
             Person = m_.Model.extend("Person", genericPersonDef);
-            p = new Person({value: ""});
+            expect(function() {
+                p = new Person({value: ""});
+            }).toThrowError("value: is required");
+
+            p = new Person({value: "fred"});
+            expect(function() {
+                p.value = "";
+            }).toThrowError("value: is required");
+
+            p.value = "flinstone";
 
             genericPersonDef.value = {
                 type: "boolean",
@@ -389,7 +435,7 @@ describe("Model", function() {
             result = "";
             result2 = "";
             Person = m_.Model.extend("Person", genericPersonDef, {
-                constructor: function() {
+                init: function() {
                     result2 += "ho";
                     this.$super();
                 },
@@ -413,7 +459,7 @@ describe("Model", function() {
                     type: "string"
                 }
             }, {
-                constructor: function() {
+                init: function() {
                     result2 += "hey";
                     this.$super();
                 },
@@ -579,7 +625,9 @@ describe("Model", function() {
         });
     });
 
+
     describe("Should be able to lock all private properties", function() {
+        var locker, lockerGetter;
         it("Should be able to manage access to private properties", function() {
             var Person = m_.Model.extend("Person", genericPersonDef);
             var p = new Person();
@@ -588,7 +636,8 @@ describe("Model", function() {
             p.__privates.middleName = "Fred";
             expect(p.__privates.middleName).toEqual("Fred");
 
-            var locker = m_.getPrivateModelLocker();
+            lockerGetter = m_.getPrivateModelLocker;
+            locker = m_.getPrivateModelLocker();
             locker(true);
 
             p.__privates.middleName = "John";
@@ -601,6 +650,9 @@ describe("Model", function() {
         });
 
         it("Should not allow multiple calls to getPrivateModelLocker", function() {
+            expect(m_.getPrivateModelLocker).toBe(undefined);
+            m_.getPrivateModelLocker = lockerGetter;
+            expect(lockerGetter).not.toBe(undefined);
             expect(m_.getPrivateModelLocker).toBe(undefined);
         });
     });
