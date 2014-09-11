@@ -298,11 +298,9 @@ describe("Miniunderscore", function() {
                 });
 
                 it("Passes all arguments", function() {
-                    console.log("Start Pas");
                     m_.defer(timerCallback, "fred", 5, "john", 2);
                     jasmine.clock().tick(1);
                     expect(timerCallback.calls.argsFor(0)).toEqual(["fred", 5, "john", 2]);
-                    console.log("Start Pas");
                 });
             });
 
