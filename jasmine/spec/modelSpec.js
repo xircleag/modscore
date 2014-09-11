@@ -6,11 +6,6 @@ describe("Model", function() {
             firstName: {
                 type: "string"
             },
-            middleName: {
-                type: "string",
-                private: true, // Nobody knows my middle name!
-                defaultValue: "Homer"
-            },
             lastName: {
                 type: "string"
             },
@@ -45,11 +40,7 @@ describe("Model", function() {
         var Person, p;
 
         beforeEach(function() {
-            Person = m_.Model.extend("Person", genericPersonDef, {
-                setMiddleName: function(inName) {
-                    this.__privates.middleName = inName;
-                }
-            });
+            Person = m_.Model.extend("Person", genericPersonDef);
             p = new Person({});
         });
 
@@ -70,21 +61,6 @@ describe("Model", function() {
             };
             expect(f).toThrow();
         });
-
-        it("middleName (private) should be settable", function() {
-            debugger;
-            p.setMiddleName("fred");
-            //p.__privates.middleName = "fred";
-            expect(p.__privates.middleName).toEqual("fred");
-        });
-
-        it("middleName (private) should reject non-string values", function() {
-            var f = function() {
-                p.__privates.middleName = 5;
-            };
-            expect(f).toThrow();
-        });
-
 
         it("Date types should be settable with autoAdjust enabled", function() {
             var d1 = new Date(), d2 = new Date(0);
@@ -217,13 +193,11 @@ describe("Model", function() {
             var d = new Date();
             var p = new Person({
                 firstName: "Fred",
-                middleName: "Flinstone",
                 birthDate: d,
                 age: 5,
                 rankings: {a: 5}
             });
             expect(p.firstName).toEqual("Fred");
-            expect(p.__privates.middleName).toEqual("Flinstone");
             expect(p.birthDate).toEqual(d);
             expect(p.age).toEqual(5);
             expect(p.rankings).toEqual({a:5});
@@ -239,7 +213,7 @@ describe("Model", function() {
             });
             var d = new Dog();
             expect(result).toEqual(true);
-debugger;
+
             var Poodle = Dog.extend("Poodle", {}, {
                 init: function(params, a, b) {
                     expect(params).toEqual({a:5});
@@ -309,26 +283,13 @@ debugger;
             var p = new Person();
             expect(p.age).toEqual(13);
 
-            expect(p.__privates.middleName).toEqual("Homer");
-
             p = new Person({age: 20});
             expect(p.age).toEqual(20);
         });
 
-        it("Should use the defaultValue if none is supplied for private property", function() {
-            genericPersonDef.myProtectedData = {
-                private: true,
-                type: "string",
-                defaultValue: "Howdy"
-            };
-            var Person = m_.Model.extend("Person", genericPersonDef);
-            var p = new Person();
-            expect(p.__privates.myProtectedData).toEqual("Howdy");
-        });
 
         it("It should support defaultValue from the parent class", function() {
-            genericPersonDef.myProtectedData = {
-                private: true,
+            genericPersonDef.myData = {
                 type: "string",
                 defaultValue: "Howdy"
             };
@@ -337,14 +298,13 @@ debugger;
             GradStudent = Person.extend("GradStudent", {
                 yearInSchool: {
                     type: "integer",
-                    private: true,
                     defaultValue: 3
                 }
             });
 
             var p = new GradStudent();
-            expect(p.__privates.myProtectedData).toEqual("Howdy");
-            expect(p.__privates.yearInSchool).toEqual(3);
+            expect(p.myData).toEqual("Howdy");
+            expect(p.yearInSchool).toEqual(3);
 
         });
 
@@ -358,21 +318,6 @@ debugger;
 
             p = new Person({personId: 5});
             expect(p.personId).toEqual(5);
-
-            genericPersonDef.personPrivateId = {
-                type: "number",
-                readOnly: true,
-                private: true,
-                defaultValue: 105
-            };
-            var Person2 = m_.Model.extend("Person2", genericPersonDef);
-            p = new Person2({personPrivateId: 55});
-            expect(p.__privates.personPrivateId).toEqual(55);
-            p = new Person2({});
-            expect(p.__privates.personPrivateId).toEqual(105);
-
-            p.__privates.personPrivateId = 205;
-            expect(p.__privates.personPrivateId).toEqual(105);
         });
 
         it("Should support required properties", function() {
@@ -625,7 +570,11 @@ debugger;
         });
     });
 
+    // ARGH: No Node support Means No Integration Server Testing!
+    // TODO: CROSS BROWSER TESTING!!!!
+    // TODO: Verify it can detect isPrivateOk for every call to $super
 
+/*
     describe("Should be able to lock all private properties", function() {
         var locker, lockerGetter;
         it("Should be able to manage access to private properties", function() {
@@ -656,5 +605,5 @@ debugger;
             expect(m_.getPrivateModelLocker).toBe(undefined);
         });
     });
-
+*/
 });

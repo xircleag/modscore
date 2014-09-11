@@ -6,7 +6,7 @@ module.exports = function(grunt) {
 			overscore: {
 				src: ["overscore.js", 'events.js', 'model.js'], // change this; browserify should generate this file on the test server. ?
 				options: {
-					specs: 'jasmine/spec/*Spec.js',
+					specs: ['jasmine/spec/overscoreSpec.js', 'jasmine/spec/modelSpec.js'],
 					summary: true
 				}
 			},

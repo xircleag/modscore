@@ -342,79 +342,47 @@
 // TODO: Consider: Can we make accessing __privates go through a getter, have it check the caller, and only allow the caller if
 // the caller is a method of "this"?
 (function() {
-    var modelInit = false, privateInit = false;
-    var privatesLocked = false;
-    var setLock = function(inLock) {
-        privatesLocked = inLock;
-    };
-    m_.getPrivateModelLocker = function() {
-
-        // Insure that third party developer can't grab the lock, and then restore getPrivateModelLocker
-        Object.defineProperty(m_, "getPrivateModelLocker",  {
-            set: function() {},
-            get: function() {}
-        });
-        return setLock;
-    };
-
+    var modelInit = false;
 
     var Model = function(params) {
         if (!modelInit) {
-                this.__values = {
+            this.__values = {
                 __notinitialized: true
             };
-            if (!(this.__class.prototype instanceof PrivateModel)) {
-                this.__privates = new this.__class.$meta.privateClass();
 
 
-                /* For each property passed in via the constructor, set the appropriate private/public value */
-                var defs = this.__class.$meta.properties;
-                if (params) {
-                    m_.each(params, function(value, name) {
-                        if (defs[name]) {
-                            if (defs[name].private) {
-                                this.__privates[name] = value;
-                            } else {
-                                this[name] = value;
-                            }
-                        }
-                    }, this);
-                }
-
-
-                /* For each unset property with a default value, set the appropriate private/public value */
-                var allDefaults = this.__class.$meta.defaults;
-                var privateDefaults = {}, pubDefaults = {};
-                m_.each(allDefaults, function(value, name) {
+            /* For each property passed in via the constructor, set the appropriate private/public value */
+            var defs = this.__class.$meta.properties;
+            if (params) {
+                m_.each(params, function(value, name) {
                     if (defs[name]) {
                         if (defs[name].private) {
-                            privateDefaults[name] = value;
+                            this[name] = value;
                         } else {
-                            pubDefaults[name] = value;
+                            this[name] = value;
                         }
                     }
                 }, this);
-                m_.defaults(this, pubDefaults);
-                m_.defaults(this.__privates, privateDefaults);
-
-
-                // Enforce required fields
-                m_.each(this.__class.$meta.properties, function(value, name, src) {
-                    if (this[name] === undefined && src[name].required) {
-                        if (!defs[name].private) {
-                            this[name] = null;
-                        } else {
-                            this.__privates[name] = null;
-                        }
-                    }
-                }, this);
-
-                this.init.apply(this, arguments);
-                delete this.__values.__notinitialized;
-                this.__privates.__values.__notinitialized = false;
             }
+
+
+            /* For each unset property with a default value, set the appropriate private/public value */
+            var allDefaults = this.__class.$meta.defaults;
+            m_.defaults(this, allDefaults);
+
+
+            // Enforce required fields
+            m_.each(this.__class.$meta.properties, function(value, name, src) {
+                if (this[name] === undefined && src[name].required) {
+                    this[name] = null;
+                }
+            }, this);
+
+            this.init.apply(this, arguments);
+            delete this.__values.__notinitialized;
             Object.seal(this);
         }
+
     };
 
     // Enable events on all Model instances/sublcasses
@@ -422,24 +390,39 @@
     Model.prototype._events = {};
     window.m_.Model = Model;
 
+    function isPrivateAllowed(caller, callerName) {
+        if (this.__values.__notinitialized) return true;
 
-    function genericGetter(def, name) {
-        if (this instanceof PrivateModel && privatesLocked) return;
-        return this.__values[name];
+        var callerFuncName = caller.$name;
+
+        // Make sure there is in fact a function name
+        if  (!callerFuncName) return false;
+
+        // Make sure there is a function of that name declared for this object
+        if (this.__class.$meta.functions[callerFuncName].indexOf(caller.toString()) == -1) return false;
+
+        return true;
     }
 
-    function genericSetter(def, name, inValue) {
-/*
+    function genericGetter(def, caller, name) {
         if (def.private) {
-            var caller = genericSetter.caller.caller;
-            var callerFuncName = caller.$name;
-            if (!callerFuncName || !this[callerFuncName] || this[callerFuncName] != this.__class.prototype[callerFuncName]) {
+            if (!isPrivateAllowed.call(this, caller)) {
                 console.warn(name + ": Private property accessed from context that is not a method of the object");
                 return;
             }
         }
-        */
-        if (this instanceof PrivateModel && privatesLocked) return;
+        return this.__values[name];
+    }
+
+    function genericSetter(def, caller, name, inValue) {
+
+        if (def.private) {
+            if (!isPrivateAllowed.call(this, caller)) {
+                console.warn(name + ": Private property accessed from context that is not a method of the object");
+                return;
+            }
+        }
+
         var altValue, adjuster, values = this.__values;
 
         /* Step 1: If readOnly property, only set it if we are in the constructor */
@@ -519,11 +502,11 @@
         Object.defineProperty(model.prototype, name, {
             enumerable: !def.private,
             configurable: def.type == "any",
-            get: function() {
-                return genericGetter.call(this, def, name);
+            get: function get() {
+                return genericGetter.call(this, def, arguments.callee.caller, name);
             },
-            set: function(inValue) {
-                return genericSetter.call(this, def, name, inValue);
+            set: function set(inValue) {
+                return genericSetter.call(this, def, arguments.callee.caller, name, inValue);
             }
         });
     }
@@ -623,8 +606,8 @@
      *     this.$super(howMuch, "truely awful");
      * }
      */
-    Model.prototype.$super = function $super() {
-        var caller = $super.caller;
+    Model.prototype.$super = function() {
+        var caller = arguments.callee.caller;
         var f = caller.$super;
         var args;
         if (f) {
@@ -660,12 +643,6 @@
         constructor.prototype = new this();
         classRegistry[className] = constructor;
 
-        if (!privateInit) {
-            var privateConstructor = makeCtor("_" + m_.camelCase(className, true) + "Private");
-            privateConstructor.prototype = new PrivateModel();
-        }
-
-
         if (functionSpec) {
             m_.each(functionSpec, function(func, name) {
                 func.$name = name; // Used to verify private properties are accessed by object methods
@@ -675,26 +652,28 @@
         }
 
         var fullSpec = this.$meta ? m_.extend({}, this.$meta.properties, propertySpec) : propertySpec;
-        var fullFunc  = this.$meta ? m_.extend({}, this.$meta.functions, functionSpec) : functionSpec;
+
+        // Build a searchable index of all functions of this object so we can validate private accessors
+        var fullFunc = {};
+        m_.each(this.$meta.functions, function(funcList, funcName) {
+            fullFunc[funcName] = funcList.concat([]); // clone the array
+        }, this);
+        m_.each(functionSpec, function(func, funcName) {
+            if (!fullFunc[funcName]) fullFunc[funcName] = [];
+            fullFunc[funcName].push(func.toString());
+        }, this);
+
         constructor.$meta = {
             properties: fullSpec,
             superclass: this,
             defaults: this.$meta ? m_.clone(this.$meta.defaults) : {},
-            privateClass: privateConstructor,
             functions: fullFunc
         };
 
         // parent method properties should not need to be defined
         m_.each(propertySpec, function(inValue, inKey) {
-            if (!inValue.private) {
-                defineProperty(constructor, inKey, inValue);
-            }
+            defineProperty(constructor, inKey, inValue);
             if ("defaultValue" in inValue) constructor.$meta.defaults[inKey] = inValue.defaultValue;
-        }, this);
-        m_.each(fullSpec, function(inValue, inKey) {
-            if (inValue.private) {
-                defineProperty(constructor.$meta.privateClass, inKey, inValue);
-            }
         }, this);
 
         constructor.extend = Model.extend;
@@ -712,12 +691,4 @@
         defaults: {},
         functions: {}
     };
-
-    privateInit = true;
-    var PrivateModel = Model.extend("PrivateModel", {}, {
-        constructor: function() {
-            this.__values.__notinitialized = true;
-        }
-    });
-    privateInit = false;
 })();
