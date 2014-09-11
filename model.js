@@ -3,11 +3,16 @@
  * @class overscore.Model
  * @author Michael Kantor
  *
+ * START-GIT-README
+ *
  * ### Requirements
+ *
  * A browser more modern than IE8
  *
  * # Motivation for this library:
+ *
  * ### Motivations: The short version:
+ *
  * - Supports defining properties to be private. Your APIs will be a lot harder to tamper with.
  * - Supports validation on all of your properties.  Your APIs will be more robust.
  * - Supports proper Object Oriented concepts (public/private, inheritance, calling parent methods and objects can't be tinkered with by your API's users.)
@@ -26,6 +31,7 @@
  * At this point in this library's evolution, all object properties are typed, method parameters are NOT typed.
  *
  * ### Motivations: Developers can no longer muck up your API
+ *
  * Objects are defined such that only the properties you define and type can be used.  As an API provider,
  * you should have some confidence that people aren't mucking with your objects, arbitrarily attaching
  * data to them.
@@ -38,6 +44,7 @@
  * being arbitrarily changed.
  *
  * ### Motivations: Your private properties really aught to be private
+ *
  * In Javascript, the only way to have truely private variables is to NOT use prototypal properties, which in turn
  * means that you can't use prototypal methods.  Which in turn means that if you create 10,000 instances,
  * you have to recreate all of the properties and methods for each one.
@@ -47,12 +54,14 @@
  * might take to get their code to work.  Even if there are consequences later on.
  *
  * ### Motivations: Your object oriented code really should be object oriented
+ *
  * Yes, there are a number of frameworks out there for declaring classes, subclasses, calling parent methods, etc...
  * This library provides all that object oriented goodness with all the behaviors described above.
  *
  * *NOTE: Static methods and properties are not yet supported*
  *
  * ### Motivations: Inspirations and outright copying:
+ *
  * - Ampersandjs: A lot of credit goes to ampersandjs, and their *State* object. It is a very subjective opinion that
  *
  *     - Their state object manages a lot more stuff than it needs to; children, collections, derivedProps, etc...
@@ -66,11 +75,13 @@
  * - Java: Yeah, I know javascript is not java.  That doesn't mean there aren't lessons to be learned. Like, say, private properties?
  *
  * ## How to use it
+ *
  * ### Step 1: Add the script to your page:
  *
  *    &lt;script type="text/javascript" src='overscore.min.js'>&lt;/script>
  *
  * ### Step 2: In your js folder, define some objects.
+ *
  * For simplicity, we'll assume that they are all defined in the same file
  *
         // Define a base class using the Global extend method
@@ -131,6 +142,7 @@
         > undefined
 
     * ### Step 3: You can also define subclasses of your class
+    *
     * Rather than use the global extend method, use extend method built into your parent class.
     * The subclass inherits all properties and methods defined on the parent.
 
@@ -160,6 +172,7 @@
         > true
 
     * ### Step 4: Add some Private Properties
+    *
     * As part of your property definition, you can specify which properties are private (default is public).
     * Private properties have exactly the same behaviors as public properties (validation, etc...) but also
     * provide some protection.
@@ -389,7 +402,7 @@
 
         kermit.age = 50;
         > age is now 50
-    *
+    * END-GIT-README
     */
 
 
