@@ -1,4 +1,4 @@
-FROM registry.infra.layer.com/vendor-nodejs:1.0.0
+FROM registry.infra.layer.com/vendor-jsframework:1.2.0
 
 ADD . /opt/modscore/
 
