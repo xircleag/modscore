@@ -35,9 +35,25 @@ module.exports = function(grunt) {
 				dest: 'build/<%= pkg.name %>.js'
 			}
 		},
+	    jsduck: {
+		    overscore: {
+		        // source paths with your code
+		        src: ['<%= jasmine.overscore.src %>'],
+
+		        // docs output dir
+		        dest: 'jsdocs',
+
+		        // extra options
+		        options: {
+		            'builtin-classes': false,
+		            'warnings': ['-no_doc', '-dup_member', '-link_ambiguous'],
+		            'external': ['XMLHttpRequest']
+		        }
+		    }
+		},
 		watch: {
 		  	files: ['<%= jasmine.overscore.src %>', '<%= jasmine.overscore.options.specs %>', "Gruntfile.js"],
-		   	tasks: ['concat', 'jasmine'] /* Concat lets us test in our local dev env and won't get done if we run/fail tests first. */
+		   	tasks: ['concat', 'jasmine', 'jsduck'] /* Concat lets us test in our local dev env and won't get done if we run/fail tests first. */
 		}
 	});
 
@@ -45,7 +61,10 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-contrib-uglify');
 	grunt.loadNpmTasks('grunt-contrib-watch');
 	grunt.loadNpmTasks('grunt-contrib-concat');
+	grunt.loadNpmTasks('grunt-jsduck');
 
-  	grunt.registerTask('default', ['uglify', 'concat', 'jasmine']);
+  	grunt.registerTask('default', ['uglify', 'concat', 'jasmine', 'jsdoc']);
+
+  	grunt.registerTask('jenkins', ['uglify', 'concat', 'jasmine', 'jsdoc']);
 
 };
