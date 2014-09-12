@@ -475,6 +475,34 @@ describe("Model", function() {
             expect(count).toEqual(2);
         });
 
+
+        it("Basic events hash should work", function() {
+            var Person = m_.Model.extend("Person", genericPersonDef);
+            var p = new Person();
+            var count1 = 0, count2 = 0;
+
+            p.on({
+                test1: function() {
+                    count1++;
+                },
+                test2: function() {
+                    count2++;
+                }
+            });
+            p.trigger("test1");
+            expect(count1).toEqual(1);
+            expect(count2).toEqual(0);
+
+            p.trigger("test2");
+            p.trigger("test2");
+            expect(count1).toEqual(1);
+            expect(count2).toEqual(2);
+
+            p.trigger("test1 test2");
+            expect(count1).toEqual(2);
+            expect(count2).toEqual(3);
+        });
+
         it("Should allow for unsubscribe", function() {
             var Person = m_.Model.extend("Person", genericPersonDef);
             var p = new Person();

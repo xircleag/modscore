@@ -43,11 +43,22 @@
 
     // Bind an event to a `callback` function. Passing `"all"` will bind
     // the callback to all events fired.
+    // MICHAEL: Acceptable uses:
+    // obj.on("evtName", func, [context])
+    // obj.on({"evtName1": func1, "evtName2": func2, "evtName3": func3}, [context]);
     on: function(name, callback, context) {
-      if (!eventsApi(this, 'on', name, [callback, context]) || !callback) return this;
-      this._events || (this._events = {});
-      var events = this._events[name] || (this._events[name] = []);
-      events.push({callback: callback, context: context, ctx: context || this});
+      if (m_.isObject(name)) {
+        var eventSpec = name;
+        context = callback;
+        m_.each(eventSpec, function(evtDef, name) {
+            this.on(name, evtDef, context);
+        }, this);
+      } else {
+        if (!eventsApi(this, 'on', name, [callback, context]) || !callback) return this;
+        this._events || (this._events = {});
+        var events = this._events[name] || (this._events[name] = []);
+        events.push({callback: callback, context: context, ctx: context || this});
+      }
       return this;
     },
 
