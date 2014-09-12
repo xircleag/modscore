@@ -8,6 +8,7 @@
  * ### Requirements
  *
  * A browser more modern than IE8
+ * NOTE: Private properties do not work in nodejs/phantomjs
  *
  * # Motivation for this library:
  *
@@ -402,24 +403,41 @@
 
         kermit.age = 50;
         > age is now 50
+    *
+    * # Static methods/properties
+    * m_.extend(*className*, *propertyDefinitions*, *functionDefintions*, *staticDefinitions*)
+    *
+    * Static methods add your methods to the class definition:
+
+        m_.extend("Person", {}, {}, {
+            people: [],
+            eatThemAll: function() {
+                Person.people.forEach(function(person){ person.isEaten();});
+            }
+        })
+        Person.eatThemAll();
+        Person.people.push(new Person());
+    *
+    * The static method *init* is called as soon as the class is defined, allowing static setup
+    * to be done:
+
+        m_.extend("Person", {}, {}, {
+            init: function() {
+               alert(this.name + " has been created");
+            }
+        });
+
     * END-GIT-README
     */
 
 
-// Compile with
-// > watchify model.js -d -o build/model.js
+// Future work:
 // var m_ = require("./miniunderscore.js");
 
-// TODO: Need to evolve the concept of setLock().  Suggestion:
-//       1. All methods passed in when defining a new object are automatically wrapped in setLock(false); f(); setLock(true);
-//       2. Instead of lock being true/false, should be a number so we can increment it and decrement it as we go from method to method
-//       3. Events should be fired asynchronously so that we do not directly call third party code while the locks are disabled.
-//          Events can be called via m_.defer() to wait 1ms before firing.
-// TODO: JsDoc / github Readme
+// TODO: Events should be fired asynchronously so that we do not directly call third party code while the locks are disabled.
+//       Events can be called via m_.defer() to wait 1ms before firing.
 // TODO: Add listeners to constructor?
 // TODO: Support for private methods?
-// TODO: Consider: Can we make accessing __privates go through a getter, have it check the caller, and only allow the caller if
-// the caller is a method of "this"?
 (function() {
     var modelInit = false;
 
@@ -726,22 +744,22 @@
      * @returns {Function} - Returns a class definition which can be used to create instances of the class
      */
     var classRegistry = {};
-    Model.extend = function(className, propertySpec, functionSpec) {
+    Model.extend = function(className, propertySpec, functionSpec, staticConfig) {
         modelInit = true;
         if (m_.isObject(className)) {
             functionSpec = arguments[1];
             propertySpec = arguments[0];
             className = "Anonymous";
         }
-        var constructor= makeCtor(className);
-        constructor.prototype = new this();
-        classRegistry[className] = constructor;
+        var cons= makeCtor(className);
+        cons.prototype = new this();
+        classRegistry[className] = cons;
 
         if (functionSpec) {
             m_.each(functionSpec, function(func, name) {
                 func.$name = name; // Used to verify private properties are accessed by object methods
-                func.$super = constructor.prototype[name];
-                constructor.prototype[name] = func;
+                func.$super = cons.prototype[name];
+                cons.prototype[name] = func;
             });
         }
 
@@ -757,7 +775,7 @@
             fullFunc[funcName].push(func.toString());
         }, this);
 
-        constructor.$meta = {
+        cons.$meta = {
             properties: fullSpec,
             superclass: this,
             defaults: this.$meta ? m_.clone(this.$meta.defaults) : {},
@@ -772,15 +790,23 @@
 
         // parent method properties should not need to be defined
         m_.each(propertySpec, function(inValue, inKey) {
-            defineProperty(constructor, inKey, inValue);
-            if ("defaultValue" in inValue) constructor.$meta.defaults[inKey] = inValue.defaultValue;
+            defineProperty(cons, inKey, inValue);
+            if ("defaultValue" in inValue) cons.$meta.defaults[inKey] = inValue.defaultValue;
         }, this);
 
-        constructor.extend = Model.extend;
+        cons.extend = Model.extend;
 
-        Object.seal(constructor.prototype);
+        Object.seal(cons.prototype);
+
+        m_.extend(cons, staticConfig);
+        var parent = cons;
+        while(parent) {
+            if (parent.init) parent.init(cons);
+            parent = parent.$meta.superclass;
+        }
+
         modelInit = false;
-        return constructor;
+        return cons;
     };
     Model.$meta = {
         properties: {
