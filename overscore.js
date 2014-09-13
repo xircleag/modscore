@@ -72,7 +72,7 @@
    * @param {String} [prefix] - String to prefix your unique identifier with
    * @return {String}
    */
-  var id = 0;
+  var idCounter = 0;
   _.uniqueId = function(prefix) {
     var id = ++idCounter + '';
     return prefix ? prefix + id : id;
@@ -253,10 +253,15 @@
    * cleared.  Simplified version of window.setTimeout(f.bind(a,b,c,...), 1)
    * @method defer
    * @param {Function} func - The function to call after a delay
+   * @param {Object} [context] - The this pointer; required if you are passing in function args
    * @param {...any} args - Any arguments that you want passed into func when its called
    */
-  _.defer = function(func) {
-    return window.setTimeout.apply(_, [func, 1].concat(slice.call(arguments, 1)));
+  _.defer = function(func, context) {
+    var args = Array.prototype.slice.call(arguments);
+    args.shift();args.shift();
+    setTimeout(function(){
+      func.apply(context, args);
+    }, 1);
   };
 
 
