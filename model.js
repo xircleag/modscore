@@ -259,6 +259,8 @@
     * - **type**: A string specifying the type: integer, double, string, boolean, object, Date, Person, Animal.
     *
     *   Type may also be an array: [integer], [double], [string], [Person], etc...
+    *   Validation will trigger on setting an array property (and will check every value of the array)
+    *   but does not at this time validate manipulation of the array after its set (push/pop/shift)
 
             {
                 scores: {
@@ -440,13 +442,15 @@
 // TODO: Support for private methods?
 (function() {
     var modelInit = false;
+    // NOTE: May have to change this once we start using browserify
+    var isNode = typeof module !== 'undefined' && module.exports || navigator.userAgent.match(/PhantomJS/);
 
     var Model = function(params) {
         if (!modelInit) {
             this.__values = {
                 __notinitialized: true
             };
-
+            this.internalId = m_.uniqueId("model");
 
             /* For each property passed in via the constructor, set the appropriate private/public value */
             var defs = this.__class.$meta.properties;
@@ -465,6 +469,11 @@
 
             /* For each unset property with a default value, set the appropriate private/public value */
             var allDefaults = this.__class.$meta.defaults;
+            m_.each(allDefaults, function(def) {
+                // shallow clone, typically this will be []; otherwise our defaultValue
+                // becomes a shared property / static object
+                if (def && typeof def == "object") allDefaults[def] = m_.clone(def);
+            });
             m_.defaults(this, allDefaults);
 
 
@@ -489,6 +498,9 @@
 
     function isPrivateAllowed(caller, callerName) {
         if (this.__values.__notinitialized) return true;
+
+        // should only happen from nodejs
+        if (isNode) return true;
 
         var callerFuncName = caller.$name;
 
@@ -577,12 +589,22 @@
             }
             if (validatorResult) throw new Error(name + ": " + validatorResult);
         } else if (inValue !== null && def.type != "any") {
-            if (classRegistry[def.type]) {
-                if (!(inValue instanceof classRegistry[def.type])) {
-                    throw name + ": must be of type " + def.type;
+            var validator = function(inValue, type) {
+                if (classRegistry[type]) {
+                    if (!(inValue instanceof classRegistry[type])) {
+                        throw name + ": must be of type " + type;
+                    }
+                } else if (({}).toString.call(inValue) != "[object " +  type + "]") {
+                    throw name + ": must be of type " + type;
                 }
-            } else if (({}).toString.call(inValue) != "[object " +  def.type + "]") {
-                throw name + ": must be of type " + def.type;
+            };
+            if (def.type.charAt(0) == "[") {
+                var type = def.type.substring(1,def.type.length-1);
+                m_.each(inValue, function(v) {
+                    validator.call(this, v, type);
+                }, this);
+            } else {
+                validator.call(this, inValue, def.type);
             }
         }
 
@@ -701,6 +723,15 @@
     };
 
     /**
+     * @method
+     * TODO: Destroying an object will remove all listeners from that object.  HOWEVER
+     * Destroying an object should remove all listeners it has registered on other objects as well.
+     */
+    Model.prototype.destroy = function() {
+        this.off();
+    };
+
+    /**
      * Call the parent class method.  If there is no parent class method, does nothing.
      * @method $super
      * @example
@@ -728,7 +759,19 @@
      * in the debugger as the name of the class.  Previously showed up as Model.extend.newfunc.
      */
     function makeCtor(name) {
-        return eval("function " + name + "(){this.__class = " + name + "; Model.apply(this, arguments);}; " + name);
+        var parts = name.split(/\./);
+        var subname = parts[parts.length-1];
+        result = eval("function " + subname + "(){this.__class = " + subname + "; Model.apply(this, arguments);}; " + subname);
+        if (parts.length > 1) {
+            var obj = window;
+            for (var i = 0; i < parts.length - 1; i++) {
+                if (!obj[parts[i]]) obj[parts[i]] = {};
+                obj = obj[parts[i]];
+            }
+            obj[subname] = result;
+        }
+
+        return result;
     }
 
 
@@ -753,6 +796,7 @@
         }
         var cons= makeCtor(className);
         cons.prototype = new this();
+        cons.prototype.internalId = 0;
         classRegistry[className] = cons;
 
         if (functionSpec) {
