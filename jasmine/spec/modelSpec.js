@@ -180,6 +180,17 @@ describe("Model", function() {
             babyKermit.parent = babyKermit;
         });
 
+        it("Custom array types should be settable", function() {
+            genericPersonDef.parents = {
+                type: "[Person]"
+            }
+            var Person = m_.Model.extend("Person", genericPersonDef);
+            var kermit = new Person();
+            var piggy = new Person();
+            var babyKermit = new Person({parents: [kermit, piggy]});
+            expect(babyKermit.parents).toEqual([kermit,piggy]);
+        });
+
 
         it("Accept all values via constructor", function() {
             var d = new Date();
@@ -367,7 +378,7 @@ describe("Model", function() {
 
 
     describe("Create Subclasses", function() {
-        var Person, GradStudent, Newbie, runs, result2;
+        var Person, GradStudent, Newbie, runs, result, result2;
         beforeEach(function() {
             result = "";
             result2 = "";
@@ -453,7 +464,14 @@ describe("Model", function() {
             var newbie = new Newbie();
             var result = newbie.runTest3(1,2,3);
             expect(result).toEqual("a:b:c1:2:31:2:3");
+        });
 
+        it("Constructor should register classes in the specified name space", function() {
+            var result = m_.Model.extend("abc.def.ghi",{});
+            expect(window.abc.def.ghi).toEqual(result);
+
+            m_.Model.extend("Frog",{});
+            expect(window.Frog).toBe(undefined);
         });
     });
 

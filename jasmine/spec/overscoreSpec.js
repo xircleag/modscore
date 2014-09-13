@@ -298,7 +298,8 @@ describe("Miniunderscore", function() {
                 });
 
                 it("Passes all arguments", function() {
-                    m_.defer(timerCallback, "fred", 5, "john", 2);
+                    debugger;
+                    m_.defer(timerCallback, this, "fred", 5, "john", 2);
                     jasmine.clock().tick(1);
                     expect(timerCallback.calls.argsFor(0)).toEqual(["fred", 5, "john", 2]);
                 });
