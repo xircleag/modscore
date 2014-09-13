@@ -21,7 +21,6 @@ module.exports = function(grunt) {
 
 	grunt.initConfig({
 		pkg: grunt.file.readJSON('package.json'),
-		readme: String(grunt.file.read("model.js")).replace(/^[\s\S]*?START-GIT-README([\s\S]*?)END-GIT-README[\s\S]*$/m, "$1"),
 		jasmine: {
 			overscore: {
 				src: ["overscore.js", 'events.js', 'model.js'], // change this; browserify should generate this file on the test server. ?
