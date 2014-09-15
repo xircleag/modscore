@@ -384,7 +384,7 @@
     *
     * ### Step 7: Setup event handlers if needed
 
-         kermit.on("age:changed", function(newAge, oldAge) {
+         kermit.on("change:age", function(newAge, oldAge) {
            if (newAge > oldAge) console.log("I'm getting Old!");
          }, this);
 
@@ -620,8 +620,8 @@
         var originalValue = values[internalName];
         if (originalValue !== inValue) {
             values[internalName] = inValue;
-            this.trigger(name + ":changed", inValue, originalValue);
-            this.trigger("changed", name, inValue, originalValue);
+            this.trigger("change:" + name, inValue, originalValue);
+            this.trigger("change", name, inValue, originalValue);
         }
 
     }

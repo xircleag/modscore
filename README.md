@@ -5,6 +5,7 @@ modscore
 ### Requirements
 
 A browser more modern than IE8
+NOTE: Private properties do not work in nodejs/phantomjs
 
 # Motivation for this library:
 
@@ -129,7 +130,7 @@ For simplicity, we'll assume that they are all defined in the same file
 
         kermit.firstName = 55;
         > Error!
-*NOTE: To disable validation, use a type of "any" instead of "integer"*
+*NOTE: To disable validation, use a type of "any" instead of "string", "integer", etc.*
 
         // Object only allows those properties that are defined; no object hacking.
         // iq is not part of the class definition:
@@ -248,6 +249,8 @@ There are some standard javascript practices that will no longer work if using p
 - **type**: A string specifying the type: integer, double, string, boolean, object, Date, Person, Animal.
 
   Type may also be an array: [integer], [double], [string], [Person], etc...
+  Validation will trigger on setting an array property (and will check every value of the array)
+  but does not at this time validate manipulation of the array after its set (push/pop/shift)
 
             {
                 scores: {
@@ -363,7 +366,7 @@ Will throw an error any time you set the value of that property to null, undefin
 
 ### Step 7: Setup event handlers if needed
 
-         kermit.on("age:changed", function(newAge, oldAge) {
+         kermit.on("change:age", function(newAge, oldAge) {
            if (newAge > oldAge) console.log("I'm getting Old!");
          }, this);
 
@@ -383,3 +386,26 @@ You can also subscribe to ALL changes on an object:
 
         kermit.age = 50;
         > age is now 50
+
+# Static methods/properties
+m_.extend(*className*, *propertyDefinitions*, *functionDefintions*, *staticDefinitions*)
+
+Static methods add your methods to the class definition:
+
+        m_.extend("Person", {}, {}, {
+            people: [],
+            eatThemAll: function() {
+                Person.people.forEach(function(person){ person.isEaten();});
+            }
+        })
+        Person.eatThemAll();
+        Person.people.push(new Person());
+
+The static method *init* is called as soon as the class is defined, allowing static setup
+to be done:
+
+        m_.extend("Person", {}, {}, {
+            init: function() {
+               alert(this.name + " has been created");
+            }
+        });

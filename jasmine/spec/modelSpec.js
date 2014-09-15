@@ -561,7 +561,7 @@ describe("Model", function() {
             var count = 0;
             var newValue = "";
             var oldValue = "";
-            p.on("firstName:changed", function(inValue, inOldValue) {
+            p.on("change:firstName", function(inValue, inOldValue) {
                 newValue = inValue;
                 oldValue = inOldValue;
                 count++;
@@ -578,6 +578,27 @@ describe("Model", function() {
             p.firstName = "Fred";
             expect(count).toEqual(2);
 
+        });
+
+        it("Should allow global change events to trigger when properties change", function() {
+            var Person = m_.Model.extend("Person", genericPersonDef);
+            var p = new Person({firstName: "Fred"});
+            var count = 0;
+            var newValue = "";
+            var oldValue = "";
+            p.on("change", function(inName, inValue, inOldValue) {
+                newValue = inValue;
+                oldValue = inOldValue;
+                count++;
+            });
+
+            p.firstName = "Fred";
+            expect(count).toEqual(0); // No change in value
+
+            p.firstName = "John";
+            expect(count).toEqual(1);
+            expect(newValue).toEqual("John");
+            expect(oldValue).toEqual("Fred");
         });
     });
 
