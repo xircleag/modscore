@@ -373,11 +373,11 @@ Will throw an error any time you set the value of that property to null, undefin
          kermit.age = 55;
          > I'm getting Old!
 Every defined property will fire an event when its value changes, and you can subscribe using
-object.on("&lt;propertyName>:changed", callback, context);
+object.on("change:&lt;propertyName>", callback, context);
 
 You can also subscribe to ALL changes on an object:
 
-        kermit.on("changed", function(propertyName, newValue, oldValue) {
+        kermit.on("change", function(propertyName, newValue, oldValue) {
             console.log(propertyName + " is now " + newValue);
         }, this);
 
@@ -387,6 +387,10 @@ You can also subscribe to ALL changes on an object:
         kermit.age = 50;
         > age is now 50
 
+You can disable triggering of events using the m_.SilentValue object in your assignments
+
+        kermit.firstName = "Kermit"; // Triggers "change" and "change:firstName"
+        kermit.firstName = new m_.SilentValue("Kermit"); // Sets the name to Kermit; no events fire
 # Static methods/properties
 m_.extend(*className*, *propertyDefinitions*, *functionDefintions*, *staticDefinitions*)
 

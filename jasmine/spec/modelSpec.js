@@ -600,6 +600,23 @@ describe("Model", function() {
             expect(newValue).toEqual("John");
             expect(oldValue).toEqual("Fred");
         });
+
+        it("Should silence events if using the SilentValue object", function() {
+            var Person = m_.Model.extend("Person", genericPersonDef);
+            var p = new Person();
+            var eventTriggered = false;
+            p.on("change", function() {
+                eventTriggered = true;
+            });
+            p.on("change:firstName", function() {
+                eventTriggered = true;
+            });
+
+            p.firstName = new m_.SilentValue("John");
+
+            expect(p.firstName).toEqual("John");
+            expect(eventTriggered).toEqual(false);
+        });
     });
 
 

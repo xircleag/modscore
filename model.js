@@ -392,11 +392,11 @@
          > I'm getting Old!
 
     * Every defined property will fire an event when its value changes, and you can subscribe using
-    * object.on("&lt;propertyName>:changed", callback, context);
+    * object.on("change:&lt;propertyName>", callback, context);
     *
     * You can also subscribe to ALL changes on an object:
 
-        kermit.on("changed", function(propertyName, newValue, oldValue) {
+        kermit.on("change", function(propertyName, newValue, oldValue) {
             console.log(propertyName + " is now " + newValue);
         }, this);
 
@@ -406,6 +406,11 @@
         kermit.age = 50;
         > age is now 50
     *
+    * You can disable triggering of events using the m_.SilentValue object in your assignments
+
+        kermit.firstName = "Kermit"; // Triggers "change" and "change:firstName"
+        kermit.firstName = new m_.SilentValue("Kermit"); // Sets the name to Kermit; no events fire
+
     * # Static methods/properties
     * m_.extend(*className*, *propertyDefinitions*, *functionDefintions*, *staticDefinitions*)
     *
@@ -444,6 +449,10 @@
     var modelInit = false;
     // NOTE: May have to change this once we start using browserify
     var isNode = typeof module !== 'undefined' && module.exports || navigator.userAgent.match(/PhantomJS/);
+
+    var SilentValue = m_.SilentValue = function(inValue) {
+        this.value = inValue;
+    };
 
     var Model = function(params) {
         if (!modelInit) {
@@ -542,7 +551,11 @@
             }
         }
 
-        var altValue, adjuster, values = this.__values;
+        var altValue, adjuster, silent, values = this.__values;
+        if (inValue instanceof SilentValue) {
+            silent = true;
+            inValue = inValue.value;
+        }
 
         /* Step 1: If readOnly property, only set it if we are in the constructor */
         if (def.readOnly && !values.__notinitialized) {
@@ -620,8 +633,10 @@
         var originalValue = values[internalName];
         if (originalValue !== inValue) {
             values[internalName] = inValue;
-            this.trigger("change:" + name, inValue, originalValue);
-            this.trigger("change", name, inValue, originalValue);
+            if (!silent) {
+                this.trigger("change:" + name, inValue, originalValue);
+                this.trigger("change", name, inValue, originalValue);
+            }
         }
 
     }
