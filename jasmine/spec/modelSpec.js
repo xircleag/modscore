@@ -617,6 +617,17 @@ describe("Model", function() {
             expect(p.firstName).toEqual("John");
             expect(eventTriggered).toEqual(false);
         });
+
+        it("Should notify on being destroyed", function() {
+            var Person = m_.Model.extend("Person", genericPersonDef);
+            var p = new Person();
+            var eventTriggeredOn = null;
+            p.on("destroy", function(person) {
+                eventTriggeredOn = person;
+            }.bind(this,p));
+            p.destroy();
+            expect(eventTriggeredOn).toEqual(p);
+        });
     });
 
 
