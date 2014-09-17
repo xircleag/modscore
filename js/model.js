@@ -454,7 +454,7 @@
     var Events = require("./events.js");
     var modelInit = false;
     // NOTE: May have to change this once we start using browserify
-    debugger;
+
     var isNode = typeof global !== 'undefined' && typeof window === 'undefined' || navigator.userAgent.match(/PhantomJS/);
 
     var SilentValue = m_.SilentValue = function(inValue) {
