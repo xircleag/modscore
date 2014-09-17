@@ -1,4 +1,3 @@
-/* NOTE: THE # below is needed to startup markdown formatting */
 /**
  * @class overscore.Model
  * @author Michael Kantor
@@ -411,6 +410,11 @@
         kermit.firstName = "Kermit"; // Triggers "change" and "change:firstName"
         kermit.firstName = new m_.SilentValue("Kermit"); // Sets the name to Kermit; no events fire
 
+    * The following events are built into the Model
+    * - change:propertyName: The named property has changed
+    * - change: The object has changed
+    * - destroy: The object has been destroyed
+    *
     * # Static methods/properties
     * m_.extend(*className*, *propertyDefinitions*, *functionDefintions*, *staticDefinitions*)
     *
@@ -456,33 +460,25 @@
 
     var Model = function(params) {
         if (!modelInit) {
+            if (!params) params = {};
             this.__values = {
                 __notinitialized: true
             };
             this.internalId = m_.uniqueId("model");
+            this.__isDestroyed = false;
 
             /* For each property passed in via the constructor, set the appropriate private/public value */
             var defs = this.__class.$meta.properties;
-            if (params) {
-                m_.each(params, function(value, name) {
-                    if (defs[name]) {
-                        if (defs[name].private) {
-                            this[name] = value;
-                        } else {
-                            this[name] = value;
-                        }
-                    }
-                }, this);
-            }
-
+            m_.each(defs, function(def, name) {
+                if (name in params) {
+                    this[name] = params[name];
+                } else if (def.type.indexOf("[") == 0) {
+                    this[name] = [];
+                }
+            }, this);
 
             /* For each unset property with a default value, set the appropriate private/public value */
             var allDefaults = this.__class.$meta.defaults;
-            m_.each(allDefaults, function(def) {
-                // shallow clone, typically this will be []; otherwise our defaultValue
-                // becomes a shared property / static object
-                if (def && typeof def == "object") allDefaults[def] = m_.clone(def);
-            });
             m_.defaults(this, allDefaults);
 
 
@@ -601,7 +597,7 @@
                 validatorResult = validator(inValue);
             }
             if (validatorResult) throw new Error(name + ": " + validatorResult);
-        } else if (inValue !== null && def.type != "any") {
+        } else if (inValue !== null && def.type != "any" && def.type != "[any]") {
             var validator = function(inValue, type) {
                 if (classRegistry[type]) {
                     if (!(inValue instanceof classRegistry[type])) {
@@ -738,11 +734,16 @@
     };
 
     /**
+     * Warning: If you implement your own destroy method, you should ALWAYS call this.$super() to insure
+     * that all required cleanup is done
+     *
      * @method
      * TODO: Destroying an object will remove all listeners from that object.  HOWEVER
      * Destroying an object should remove all listeners it has registered on other objects as well.
      */
     Model.prototype.destroy = function() {
+        this.__isDestroyed = true;
+        this.trigger("destroy");
         this.off();
     };
 
@@ -769,6 +770,20 @@
             return f.apply(this, args);
         }
     }
+
+    /**
+     * Creates a JSON structure using only the non-private properties of the object
+     * @method
+     */
+     Model.prototype.toJson = function() {
+        var obj = {};
+        m_.each(this.__class.$meta.properties, function(def, name) {
+            if (!def.private) {
+                obj[name] = this[name];
+            }
+        }, this);
+        return JSON.stringify(obj);
+     };
 
     /* Unfortunate use of eval, needed until we find a better way to make the class name actually show up
      * in the debugger as the name of the class.  Previously showed up as Model.extend.newfunc.
@@ -869,8 +884,9 @@
     };
     Model.$meta = {
         properties: {
-            name: "constructor",
-            type: "any" // TODO: Support function
+            constructor: {
+                type: "any" // TODO: Support function
+            }
         },
         superclass: null,
         defaults: {},
