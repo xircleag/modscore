@@ -13,9 +13,10 @@ m_.Model = require("./model.js");
  * var Model = require("modscore.js").Model;
  */
 
+if (typeof global !== "undefined") {
+    module.exports = m_;
+}
 if (typeof window !== "undefined") {
     window.m_ = m_;
-} else if (typeof global !== "undefined") {
-    module.exports = m_;
 }
 
