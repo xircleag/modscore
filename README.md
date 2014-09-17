@@ -391,6 +391,11 @@ You can disable triggering of events using the m_.SilentValue object in your ass
 
         kermit.firstName = "Kermit"; // Triggers "change" and "change:firstName"
         kermit.firstName = new m_.SilentValue("Kermit"); // Sets the name to Kermit; no events fire
+The following events are built into the Model
+- change:propertyName: The named property has changed
+- change: The object has changed
+- destroy: The object has been destroyed
+
 # Static methods/properties
 m_.extend(*className*, *propertyDefinitions*, *functionDefintions*, *staticDefinitions*)
 

@@ -449,10 +449,13 @@
 //       Events can be called via m_.defer() to wait 1ms before firing.
 // TODO: Add listeners to constructor?
 // TODO: Support for private methods?
-(function() {
+
+    var m_ = require("./util.js");
+    var Events = require("./events.js");
     var modelInit = false;
     // NOTE: May have to change this once we start using browserify
-    var isNode = typeof module !== 'undefined' && module.exports || navigator.userAgent.match(/PhantomJS/);
+    debugger;
+    var isNode = typeof global !== 'undefined' && typeof window === 'undefined' || navigator.userAgent.match(/PhantomJS/);
 
     var SilentValue = m_.SilentValue = function(inValue) {
         this.value = inValue;
@@ -497,9 +500,9 @@
     };
 
     // Enable events on all Model instances/sublcasses
-    m_.extend(Model.prototype, window.BackboneEvents);
+    m_.extend(Model.prototype, Events);
     Model.prototype._events = {};
-    window.m_.Model = Model;
+
 
     function isPrivateAllowed(caller, callerName) {
         if (this.__values.__notinitialized) return true;
@@ -892,4 +895,5 @@
         defaults: {},
         functions: {}
     };
-})();
+
+    module.exports = Model;

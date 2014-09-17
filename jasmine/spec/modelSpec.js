@@ -39,7 +39,6 @@ describe("Model", function() {
 
     describe("Verify Extend Process", function() {
         var Person, p;
-
         beforeEach(function() {
             Person = m_.Model.extend("Person", genericPersonDef);
             p = new Person({});

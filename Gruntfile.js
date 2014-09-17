@@ -18,17 +18,29 @@ module.exports = function(grunt) {
 	    grunt.file.write( out, contents );
 	});
 
+	grunt.registerMultiTask("generateModuleFile", "Copies browserify.js to build/module.js", function() {
+		var contents = grunt.file.read("js/browserify.js");
+		grunt.file.write("build/module.js", contents);
+	});
 
 	grunt.initConfig({
 		pkg: grunt.file.readJSON('package.json'),
 		jasmine: {
-			overscore: {
-				src: ["overscore.js", 'events.js', 'model.js'], // change this; browserify should generate this file on the test server. ?
+			modscore: {
+				src: ["build/modscore.js"],
 				options: {
 					specs: ['jasmine/spec/overscoreSpec.js', 'jasmine/spec/modelSpec.js'],
 					summary: true
 				}
 			},
+		},
+		browserify: {
+		  	modscore: {
+			    files: {
+			      'build/modscore.js': ['js/browserify.js']
+			    },
+			    options: {}
+			}
 		},
 		uglify: {
 			options: {
@@ -39,25 +51,26 @@ module.exports = function(grunt) {
 				},
 				sourceMap: true
 			},
-			overscore: {
+			modscore: {
 				files: {
-					'build/<%= pkg.name %>.min.js': ['<%= jasmine.overscore.src %>']
+					'build/<%= pkg.name %>.min.js': ['build/<%= pkg.name %>.js']
 				}
 			}
 		},
-		concat: {
+/*		concat: {
+
 			options: {
 				separator: ';'
 			},
-			dist: {
+			modscore: {
 				src: ['<%= jasmine.overscore.src %>'],
 				dest: 'build/<%= pkg.name %>.js'
 			}
-		},
+		},*/
 	    jsduck: {
-		    overscore: {
+		    modscore: {
 		        // source paths with your code
-		        src: ['<%= jasmine.overscore.src %>'],
+		        src: ['js/*.js'],
 
 		        // docs output dir
 		        dest: 'jsdocs',
@@ -73,24 +86,28 @@ module.exports = function(grunt) {
 		buildGitReadme: {
 			overscore: {
 				prepend: "<%= pkg.name %>\n========\n\n",
-				paths: ["model.js"],
+				paths: ["js/model.js"],
 				output: "README.md"
 			}
 		},
+		generateModuleFile: {
+			overscore: {
+			}
+		},
 		watch: {
-		  	files: ['<%= jasmine.overscore.src %>', '<%= jasmine.overscore.options.specs %>', "Gruntfile.js"],
-		   	tasks: ['concat', 'jasmine', 'jsduck', 'buildGitReadme'] /* Concat lets us test in our local dev env and won't get done if we run/fail tests first. */
+		  	files: ['js/*.js', '<%= jasmine.overscore.options.specs %>', "Gruntfile.js"],
+		   	tasks: ['browserify', 'jasmine', 'jsduck', 'buildGitReadme', 'generateModuleFile'] /* Concat lets us test in our local dev env and won't get done if we run/fail tests first. */
 		}
 	});
 
 	grunt.loadNpmTasks('grunt-contrib-jasmine');
 	grunt.loadNpmTasks('grunt-contrib-uglify');
 	grunt.loadNpmTasks('grunt-contrib-watch');
-	grunt.loadNpmTasks('grunt-contrib-concat');
 	grunt.loadNpmTasks('grunt-jsduck');
+	grunt.loadNpmTasks('grunt-browserify');
 
-  	grunt.registerTask('default', ['uglify', 'concat', 'jasmine', 'jsduck', 'buildGitReadme']);
+  	grunt.registerTask('default', ['browserify', 'jasmine', 'generateModuleFile', 'jsduck', 'buildGitReadme', 'uglify']);
 
-  	grunt.registerTask('jenkins', ['uglify', 'concat', 'jasmine', 'jsduck', 'buildGitReadme']);
+  	grunt.registerTask('jenkins', ['browserify', 'jasmine', 'generateModuleFile', 'jsduck', 'buildGitReadme', 'uglify']);
 
 };

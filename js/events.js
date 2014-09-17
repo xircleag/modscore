@@ -21,9 +21,9 @@
  * MODIFIED BY Michael: Removes miniscore
  * @class overscore.Events
  */
-/* global exports:true, define, module */
-(function() {
 
+
+  var m_ = require("./util.js");
   var Events;
 
   // Backbone.Events
@@ -174,17 +174,4 @@
     }
   };
 
-  // Export Events as BackboneEvents depending on current context
-  if (typeof define === "function") {
-    define(function() {
-      return Events;
-    });
-  } else if (typeof exports !== 'undefined') {
-    if (typeof module !== 'undefined' && module.exports) {
-      exports = module.exports = Events;
-    }
-    exports.BackboneEvents = Events;
-  } else {
-    window.BackboneEvents = Events;
-  }
-})(this);
+  module.exports = Events;
