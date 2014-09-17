@@ -41,6 +41,12 @@
   //
   Events = {
 
+    clearEvents: function() {
+      m_.each(this._events, function(value, name) {
+        delete this._events[name];
+      }, this);
+    },
+
     // Bind an event to a `callback` function. Passing `"all"` will bind
     // the callback to all events fired.
     // MICHAEL: Acceptable uses:
@@ -55,7 +61,7 @@
         }, this);
       } else {
         if (!eventsApi(this, 'on', name, [callback, context]) || !callback) return this;
-        this._events || (this._events = {});
+        this._events || (this.clearEvents());
         var events = this._events[name] || (this._events[name] = []);
         events.push({callback: callback, context: context, ctx: context || this});
       }
@@ -83,7 +89,7 @@
       var retain, ev, events, names, i, l, j, k;
       if (!this._events || !eventsApi(this, 'off', name, [callback, context])) return this;
       if (!name && !callback && !context) {
-        this._events = {};
+        this.clearEvents();
         return this;
       }
 
