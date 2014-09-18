@@ -55,9 +55,10 @@
    * @param {String} [prefix] - String to prefix your unique identifier with
    * @return {String}
    */
-  var idCounter = 0;
+  var idCounters = {};
   _.uniqueId = function(prefix) {
-    var id = ++idCounter + '';
+    if (!(prefix in idCounters)) idCounters[prefix] = 0;
+    var id = ++idCounters[prefix]  + '';
     return prefix ? prefix + id : id;
   };
 

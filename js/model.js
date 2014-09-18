@@ -467,7 +467,9 @@
             this.__values = {
                 __notinitialized: true
             };
-            this.internalId = m_.uniqueId("model");
+
+            this.internalId = m_.uniqueId(this.__class.name);
+
             this.__isDestroyed = false;
 
             /* For each property passed in via the constructor, set the appropriate private/public value */
