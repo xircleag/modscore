@@ -18,6 +18,18 @@ module.exports = function(grunt) {
 	    grunt.file.write( out, contents );
 	});
 
+	grunt.registerMultiTask("removeDebuggers", "Report errors if debugger; shows up in code", function() {
+	    var paths = grunt.file.expand( this.data.paths );
+
+	        /* Don't expect multiple paths, but its boilerplate code I found which we can build upon */
+	    paths.forEach(function( path ) {
+	    	var contents = grunt.file.read(path);
+	    	var matches = contents.match(/^\s*debugger\s*;\s*$/m);
+	    	if (matches) throw new Error("Debugger found in " + path);
+	    });
+	});
+
+
 
 	grunt.initConfig({
 		pkg: grunt.file.readJSON('package.json'),
@@ -86,6 +98,12 @@ module.exports = function(grunt) {
 				output: "README.md"
 			}
 		},
+		removeDebuggers: {
+			overscore: {
+				paths: ["js/*.js"],
+				output: "README.md"
+			}
+		},
 
 		watch: {
 		  	files: ['js/*.js', '<%= jasmine.overscore.options.specs %>', "Gruntfile.js"],
@@ -99,8 +117,8 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-jsduck');
 	grunt.loadNpmTasks('grunt-browserify');
 
-  	grunt.registerTask('default', ['browserify', 'jasmine', 'jsduck', 'buildGitReadme', 'uglify']);
+  	grunt.registerTask('default', ['browserify', 'jasmine', 'jsduck', 'buildGitReadme', 'uglify', 'removeDebuggers']);
 
-  	grunt.registerTask('jenkins', ['browserify', 'jasmine', 'jsduck', 'buildGitReadme', 'uglify']);
+  	grunt.registerTask('jenkins', ['browserify', 'jasmine', 'jsduck', 'buildGitReadme', 'uglify', 'removeDebuggers']);
 
 };
