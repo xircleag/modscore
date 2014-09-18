@@ -75,7 +75,7 @@
    */
   _.each = function(obj, callback, context) {
     if (obj == null) return obj;
-    if (m_.isArray(obj)) {
+    if (_.isArray(obj)) {
       obj.forEach(callback, context);
     } else {
       var keys = _.keys(obj);
