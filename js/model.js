@@ -468,7 +468,7 @@
                 __notinitialized: true
             };
 
-            this.internalId = m_.uniqueId(this.__class.name);
+            //this.internalId = m_.uniqueId(this.__class.name);
 
             this.__isDestroyed = false;
 
@@ -486,13 +486,14 @@
             var allDefaults = this.__class.$meta.defaults;
             m_.defaults(this, allDefaults);
 
-
             // Enforce required fields
             m_.each(this.__class.$meta.properties, function(value, name, src) {
                 if (this[name] === undefined && src[name].required) {
                     this[name] = null;
                 }
             }, this);
+
+            if (params.events) this.on(params.events);
 
             this.init.apply(this, arguments);
             delete this.__values.__notinitialized;
@@ -831,7 +832,7 @@
         }
         var cons= makeCtor(className);
         cons.prototype = new this();
-        cons.prototype.internalId = 0;
+
         classRegistry[className] = cons;
 
         if (functionSpec) {
@@ -887,15 +888,28 @@
         modelInit = false;
         return cons;
     };
+
     Model.$meta = {
         properties: {
             constructor: {
                 type: "any" // TODO: Support function
+            },
+            events: {
+                type: "object"
+            },
+            internalId: {
+                type: "string"
             }
         },
         superclass: null,
         defaults: {},
         functions: {}
     };
+
+
+    m_.each(Model.$meta.properties, function(inValue, inKey) {
+        defineProperty(Model, inKey, inValue);
+        if ("defaultValue" in inValue) Model.$meta.defaults[inKey] = inValue.defaultValue;
+    }, this);
 
     module.exports = Model;

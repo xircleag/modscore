@@ -520,6 +520,33 @@ describe("Model", function() {
             expect(count2).toEqual(3);
         });
 
+        it("Basic events hash in constructor should work", function() {
+            var Person = m_.Model.extend("Person", genericPersonDef);
+            var count1 = 0, count2 = 0;
+            var p = new Person({
+                events:{
+                    test1: function() {
+                        count1++;
+                    },
+                    test2: function() {
+                        count2++;
+                    }
+                }
+            });
+            p.trigger("test1");
+            expect(count1).toEqual(1);
+            expect(count2).toEqual(0);
+
+            p.trigger("test2");
+            p.trigger("test2");
+            expect(count1).toEqual(1);
+            expect(count2).toEqual(2);
+
+            p.trigger("test1 test2");
+            expect(count1).toEqual(2);
+            expect(count2).toEqual(3);
+        });
+
         it("Should allow for unsubscribe", function() {
             var Person = m_.Model.extend("Person", genericPersonDef);
             var p = new Person();
