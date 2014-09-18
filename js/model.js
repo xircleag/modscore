@@ -468,7 +468,7 @@
                 __notinitialized: true
             };
 
-            //this.internalId = m_.uniqueId(this.__class.name);
+            this.internalId = m_.uniqueId(this.__class.name);
 
             this.__isDestroyed = false;
 
