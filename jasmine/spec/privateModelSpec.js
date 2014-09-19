@@ -192,5 +192,22 @@ describe("PrivateModel", function() {
             p.setAge(5);
             expect(p.age).toEqual(5);
         });
+
+        it("Private methods should restrict access", function() {
+            Person = m_.Model.extend("Person", genericPersonDef, {
+                __setAge: function(v) {
+                    this.age = v;
+                },
+                setAge: function(v) {
+                    this.__setAge(v);
+                }
+            });
+            var p = new Person();
+            expect(p.__setAge).toBe(undefined);
+            debugger;
+            p.setAge(55);
+
+            expect(p.age).toEqual(55);
+        });
     });
 });

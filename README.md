@@ -245,6 +245,40 @@ There are some standard javascript practices that will no longer work if using p
         Person.prototype.getAge = function() {
             return this.age; // FAIL, This function was not part of the Class Definition
         };
+#### Also use privateSetter
+Note that you can also use a privateSetter; this makes a property readonly to the public
+but settable to your class:
+
+        var Animal = m_.Model.extend("Animal", {
+            age: {
+                type: "integer",
+                privateSetter: true,
+                defaultValue: 13
+            }
+        });
+        var dog = new Animal();
+        console.log(dog.age);
+        > 13
+        dog.age = 3;
+        > Fail!
+#### Also use private methods
+Any method whose name starts with __ gets the same protections as a private property
+
+        var Animal = m_.Model.extend("Animal", {}, {
+            __alert: function() {
+                console.log("Hello");
+            },
+            alert: function() {
+                this.__alert();
+            }
+        });
+
+        var kermit = new Animal();
+        kermit.__alert();
+        > Throws error;
+
+        kermit.alert();
+        > "Hello"
 ### Step 5: Further refine your property definitions
 - **type**: A string specifying the type: integer, double, string, boolean, object, Date, Person, Animal.
 

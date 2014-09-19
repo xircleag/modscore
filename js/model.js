@@ -254,6 +254,42 @@
             return this.age; // FAIL, This function was not part of the Class Definition
         };
 
+    * #### Also use privateSetter
+    * Note that you can also use a privateSetter; this makes a property readonly to the public
+    * but settable to your class:
+
+        var Animal = m_.Model.extend("Animal", {
+            age: {
+                type: "integer",
+                privateSetter: true,
+                defaultValue: 13
+            }
+        });
+        var dog = new Animal();
+        console.log(dog.age);
+        > 13
+        dog.age = 3;
+        > Fail!
+
+    * #### Also use private methods
+    * Any method whose name starts with __ gets the same protections as a private property
+
+        var Animal = m_.Model.extend("Animal", {}, {
+            __alert: function() {
+                console.log("Hello");
+            },
+            alert: function() {
+                this.__alert();
+            }
+        });
+
+        var kermit = new Animal();
+        kermit.__alert();
+        > Throws error;
+
+        kermit.alert();
+        > "Hello"
+
     * ### Step 5: Further refine your property definitions
     * - **type**: A string specifying the type: integer, double, string, boolean, object, Date, Person, Animal.
     *
@@ -535,6 +571,8 @@
         return propPrefix + (name.length > 2 ? name.substring(2) + name.substring(0,2) : name);
     }
 
+
+
     function genericGetter(def, caller, name) {
         if (def.private) {
             if (!isPrivateAllowed.call(this, caller)) {
@@ -657,6 +695,28 @@
                 return genericSetter.call(this, def, arguments.callee.caller, name, inValue);
             }
         });
+    }
+
+    function functionGetter(model, def, caller, name) {
+        if (def.private) {
+            if (!isPrivateAllowed.call(this, caller)) {
+                console.warn(name + ": Private property accessed from context that is not a method of the object");
+                return;
+            }
+        }
+        return model.prototype.__functions[name];
+    }
+
+
+    function defineFunc(model, name, def, func) {
+        Object.defineProperty(model.prototype, name, {
+            enumerable: false,
+            configurable: true,
+            get: function get() {
+                return functionGetter.call(this, model, def, arguments.callee.caller, name);
+            }
+        });
+        model.prototype.__functions[name] = func;
     }
 
     // TODO: See about changing this to a hash instead of a function
@@ -833,6 +893,7 @@
         }
         var cons= makeCtor(className);
         cons.prototype = new this();
+        cons.prototype.__functions = {};
 
         classRegistry[className] = cons;
 
@@ -840,7 +901,11 @@
             m_.each(functionSpec, function(func, name) {
                 func.$name = name; // Used to verify private properties are accessed by object methods
                 func.$super = cons.prototype[name];
-                cons.prototype[name] = func;
+                if (name.indexOf("__") == 0) {
+                    defineFunc(cons, name, {private:true}, func);
+                } else {
+                    cons.prototype[name] = func;
+                }
             });
         }
 
