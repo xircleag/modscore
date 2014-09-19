@@ -581,6 +581,22 @@ describe("Model", function() {
 
         });
 
+        it("once should work", function() {
+            var Person = m_.Model.extend("Person", genericPersonDef);
+            var p = new Person();
+            var count = 0;
+
+            p.once("Test", function() {
+                count++;
+            });
+            p.trigger("Test");
+            p.trigger("Test");
+            p.trigger("Test");
+
+            expect(count).toEqual(1);
+        });
+
+
         it("Should allow events to trigger when properties change", function() {
             var Person = m_.Model.extend("Person", genericPersonDef);
             var p = new Person({firstName: "Fred"});
