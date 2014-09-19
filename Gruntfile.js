@@ -1,5 +1,13 @@
 module.exports = function(grunt) {
 
+	/* Experimental code for disabling audible alerts on error;
+	 * grunt-notify is better suited to the task in this work environment
+	 */
+	var oldout = process.stdout.write;
+	process.stdout.write = function(msg) {
+	  oldout.call(this, msg.replace('\x07', ''));
+	};
+
 	grunt.registerMultiTask("buildGitReadme", "Replace specified file with matching text", function() {
 	    var paths = grunt.file.expand( this.data.paths ),
 	        out = this.data.output,
@@ -38,17 +46,19 @@ module.exports = function(grunt) {
 				src: ["build/modscore.js"],
 				options: {
 					specs: ['jasmine/spec/overscoreSpec.js', 'jasmine/spec/modelSpec.js'],
-					summary: true
+					summary: true,
+					message: "Jasmine Failed"
 				}
 			},
+			options: {}
 		},
 		browserify: {
 		  	modscore: {
 			    files: {
 			      'build/modscore.js': ['js/browserify.js']
-			    },
-			    options: {}
-			}
+			    }
+			},
+			options: {}
 		},
 		uglify: {
 			options: {
@@ -65,16 +75,7 @@ module.exports = function(grunt) {
 				}
 			}
 		},
-/*		concat: {
 
-			options: {
-				separator: ';'
-			},
-			modscore: {
-				src: ['<%= jasmine.overscore.src %>'],
-				dest: 'build/<%= pkg.name %>.js'
-			}
-		},*/
 	    jsduck: {
 		    modscore: {
 		        // source paths with your code
@@ -89,24 +90,27 @@ module.exports = function(grunt) {
 		            'warnings': ['-no_doc', '-dup_member', '-link_ambiguous'],
 		            'external': ['XMLHttpRequest']
 		        }
-		    }
+		    },
+			options: {}
 		},
 		buildGitReadme: {
 			overscore: {
 				prepend: "<%= pkg.name %>\n========\n\n",
 				paths: ["js/model.js"],
 				output: "README.md"
-			}
+			},
+			options: {}
 		},
 		removeDebuggers: {
 			overscore: {
 				paths: ["js/*.js"],
 				output: "README.md"
-			}
+			},
+			options: {}
 		},
 
 		watch: {
-		  	files: ['js/*.js', '<%= jasmine.overscore.options.specs %>', "Gruntfile.js"],
+		  	files: ['js/*.js', '<%= jasmine.modscore.options.specs %>', "Gruntfile.js"],
 		   	tasks: ['browserify', 'jasmine', 'jsduck', 'buildGitReadme'] /* Concat lets us test in our local dev env and won't get done if we run/fail tests first. */
 		}
 	});
@@ -116,6 +120,7 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-contrib-watch');
 	grunt.loadNpmTasks('grunt-jsduck');
 	grunt.loadNpmTasks('grunt-browserify');
+ 	grunt.loadNpmTasks('grunt-notify');
 
   	grunt.registerTask('default', ['browserify', 'jasmine', 'jsduck', 'buildGitReadme', 'uglify', 'removeDebuggers']);
 
