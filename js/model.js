@@ -547,7 +547,7 @@
 
     function genericSetter(def, caller, name, inValue) {
 
-        if (def.private) {
+        if (def.private || def.privateSetter) {
             if (!isPrivateAllowed.call(this, caller)) {
                 console.warn(name + ": Private property accessed from context that is not a method of the object");
                 return;

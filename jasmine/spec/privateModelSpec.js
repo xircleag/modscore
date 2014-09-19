@@ -20,7 +20,8 @@ describe("PrivateModel", function() {
             },
             age: {
                 type: "integer",
-                defaultValue: 13
+                defaultValue: 13,
+                privateSetter: true
             },
             percentile: {
                 type: "double"
@@ -172,5 +173,24 @@ describe("PrivateModel", function() {
             expect(p.getData()).toEqual(105);
         });
 
+        it("privateSetter should allow us to see the value but not change the value", function() {
+            Person = m_.Model.extend("Person", genericPersonDef);
+            var p = new Person();
+            expect(p.age).toEqual(13);
+            p.age = 5;
+            expect(p.age).toEqual(13);
+        });
+
+        it("privateSetter should allow class to change its value", function() {
+            Person = m_.Model.extend("Person", genericPersonDef, {
+                setAge: function(v) {
+                    this.age = v;
+                }
+            });
+            var p = new Person();
+            expect(p.age).toEqual(13);
+            p.setAge(5);
+            expect(p.age).toEqual(5);
+        });
     });
 });
