@@ -519,7 +519,7 @@
         if  (!callerFuncName) return false;
 
         // Make sure there is a function of that name declared for this object
-        if (this.__class.$meta.functions[callerFuncName].indexOf(caller.toString()) == -1) return false;
+        if (!this.__class.$meta.functions[callerFuncName] || this.__class.$meta.functions[callerFuncName].indexOf(caller.toString()) == -1) return false;
 
         return true;
     }
