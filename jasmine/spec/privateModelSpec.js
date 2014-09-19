@@ -201,13 +201,24 @@ describe("PrivateModel", function() {
                 setAge: function(v) {
                     this.__setAge(v);
                 }
+            },
+            // Statics
+            {
+                getOldPerson: function() {
+                    var p = new Person();
+                    p.__setAge(1000);
+                    return p;
+                }
             });
             var p = new Person();
             expect(p.__setAge).toBe(undefined);
-            debugger;
+
             p.setAge(55);
 
             expect(p.age).toEqual(55);
+
+            p = Person.getOldPerson();
+            expect(p.age).toEqual(1000);
         });
     });
 });

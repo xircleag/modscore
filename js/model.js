@@ -553,10 +553,16 @@
         var callerFuncName = caller.$name;
 
         // Make sure there is in fact a function name
-        if  (!callerFuncName) return false;
+        if (!callerFuncName) return false;
 
-        // Make sure there is a function of that name declared for this object
-        if (!this.__class.$meta.functions[callerFuncName] || this.__class.$meta.functions[callerFuncName].indexOf(caller.toString()) == -1) return false;
+        // Static methods should have access to private methods?
+        if (callerFuncName.indexOf("STATIC ") == 0) {
+            callerFuncName = callerFuncName.substring(7);
+            if (!this.__class[callerFuncName] || this.__class[callerFuncName] != caller) return false;
+        } else {
+            // Make sure there is a function of that name declared for this object
+            if (!this.__class.$meta.functions[callerFuncName] || this.__class.$meta.functions[callerFuncName].indexOf(caller.toString()) == -1) return false;
+        }
 
         return true;
     }
@@ -699,7 +705,7 @@
 
     function functionGetter(model, def, caller, name) {
         if (def.private) {
-            if (!isPrivateAllowed.call(this, caller)) {
+            if (!isPrivateAllowed.call(this, caller) && !m_.isFunction(model[name])) {
                 console.warn(name + ": Private property accessed from context that is not a method of the object");
                 return;
             }
@@ -943,6 +949,10 @@
         cons.extend = Model.extend;
 
         Object.seal(cons.prototype);
+
+        m_.each(staticConfig, function(func, funcName) {
+            if (m_.isFunction(func)) func.$name = "STATIC " + funcName;
+        }, this);
 
         m_.extend(cons, staticConfig);
         var parent = cons;
