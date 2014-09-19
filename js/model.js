@@ -471,6 +471,7 @@
             this.internalId = m_.uniqueId(this.__class.name);
 
             this.__isDestroyed = false;
+            this._events = {};
 
             /* For each property passed in via the constructor, set the appropriate private/public value */
             var defs = this.__class.$meta.properties;
@@ -895,6 +896,9 @@
                 type: "any" // TODO: Support function
             },
             events: {
+                type: "object"
+            },
+            _events: {
                 type: "object"
             },
             internalId: {
