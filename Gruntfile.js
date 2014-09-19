@@ -108,6 +108,11 @@ module.exports = function(grunt) {
 			},
 			options: {}
 		},
+		bump: {
+			options: {
+				push: false
+			}
+		},
 
 		watch: {
 		  	files: ['js/*.js', '<%= jasmine.modscore.options.specs %>', "Gruntfile.js"],
@@ -121,6 +126,7 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-jsduck');
 	grunt.loadNpmTasks('grunt-browserify');
  	grunt.loadNpmTasks('grunt-notify');
+	grunt.loadNpmTasks('grunt-bump');
 
   	grunt.registerTask('default', ['browserify', 'jasmine', 'jsduck', 'buildGitReadme', 'uglify', 'removeDebuggers']);
 
