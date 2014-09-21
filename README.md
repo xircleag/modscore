@@ -85,10 +85,10 @@ For simplicity, we'll assume that they are all defined in the same file
         // Define a base class using the Global extend method
         var Animal = m_.Model.extend(
             // Argument 1: Name of the class
-            "Animal",
+            name: "Animal",
 
             // Argument 2: An object defining all of your properties
-            {
+            properties: {
                 firstName: {
                     type: "string"
                 },
@@ -97,8 +97,8 @@ For simplicity, we'll assume that they are all defined in the same file
                 }
             },
 
-            // Argument 3 (optional): An object defining all methods for your class
-            {
+            // Argument 3: An object defining all methods for your class
+            methods: {
                 celebrateBirthday: function() {
                     this.age++;
                 }
@@ -142,18 +142,21 @@ For simplicity, we'll assume that they are all defined in the same file
 Rather than use the global extend method, use extend method built into your parent class.
 The subclass inherits all properties and methods defined on the parent.
 
-        var Person = Animal.extend("Person", {
-            lastName: {
-                type: "string"
+        var Person = Animal.extend({
+            name: "Person", {
+            properties: {
+                lastName: {
+                    type: "string"
+                },
+                hasRecentBirthday: {
+                    type: "boolean"
+                }
             },
-            hasRecentBirthday: {
-                type: "boolean"
-            }
-        },
-        {
-            celebrateBirthday: function() {
-                this.$super();
-                this.hasRecentBirthday = true;
+            methods: {
+                celebrateBirthday: function() {
+                    this.$super();
+                    this.hasRecentBirthday = true;
+                }
             }
         });
 The call to this.$super() calls the parent method, which updates this.age.
@@ -171,19 +174,23 @@ As part of your property definition, you can specify which properties are privat
 Private properties have exactly the same behaviors as public properties (validation, etc...) but also
 provide some protection.
 
-        var Animal = m_.Model.extend("Animal", {
-            firstName: {
-                type: "string"
+        var Animal = m_.Model.extend({
+            name: "Animal",
+            properties: {
+                firstName: {
+                    type: "string"
+                },
+                age: {
+                    type: "integer",
+                    private: true // Some people don't like their age to be common knowledge...
+                }
             },
-            age: {
-                type: "integer",
-                private: true // Some people don't like their age to be common knowledge...
-            }
-        }, {
-            // getAge is a defined method of the "Animal" class, and therefore can access this.age.
-            getAge: function() {
-                // Protect privacy for young animals...
-                if (age > 10) return this.age;
+            methods: {
+                // getAge is a defined method of the "Animal" class, and therefore can access this.age.
+                getAge: function() {
+                    // Protect privacy for young animals...
+                    if (age > 10) return this.age;
+                }
             }
         });
 
@@ -215,24 +222,28 @@ There are some standard javascript practices that will no longer work if using p
         }
 2. You can not access private data from anonymous functions
 
-        var Animal = m_.Model.extend("Animal", {
-            age: {
-                type: "integer",
-                private: true // Some people don't like their age to be common knowledge...
-            }
-        }, {
-            // These functions are part of the class definition, and so can access private data
-            setAge: function(inValue) {
-                this.age = inValue; // SUCCESS!!
+        var Animal = m_.Model.extend({
+            name: "Animal",
+            properties: {
+                age: {
+                    type: "integer",
+                    private: true // Some people don't like their age to be common knowledge...
+                }
             },
-            loadAge: function() {
-                xhr.get({
-                    url: "http://gettingold.com/howOldAmI",
-                    onSuccess: function(age) {
-                        this.age = age; // FAIL, onSuccess is NOT a method of Animal!!
-                        this.setAge(age); // SUCCESS!!
-                    }
-                });
+            methods: {
+                // These functions are part of the class definition, and so can access private data
+                setAge: function(inValue) {
+                    this.age = inValue; // SUCCESS!!
+                },
+                loadAge: function() {
+                    xhr.get({
+                        url: "http://gettingold.com/howOldAmI",
+                        onSuccess: function(age) {
+                            this.age = age; // FAIL, onSuccess is NOT a method of Animal!!
+                            this.setAge(age); // SUCCESS!!
+                        }
+                    });
+                }
             }
         });
 3. You can not tack on new methods
@@ -249,11 +260,14 @@ There are some standard javascript practices that will no longer work if using p
 Note that you can also use a privateSetter; this makes a property readonly to the public
 but settable to your class:
 
-        var Animal = m_.Model.extend("Animal", {
-            age: {
-                type: "integer",
-                privateSetter: true,
-                defaultValue: 13
+        var Animal = m_.Model.extend({
+            name: "Animal",
+            properties: {
+                age: {
+                    type: "integer",
+                    privateSetter: true,
+                    defaultValue: 13
+                }
             }
         });
         var dog = new Animal();
@@ -262,14 +276,21 @@ but settable to your class:
         dog.age = 3;
         > Fail!
 #### Also use private methods
-Any method whose name starts with __ gets the same protections as a private property
+Your methods can be declared with a method definition instead of just a function;
+this is done using a JS Object with the *method* property containing your function.
 
-        var Animal = m_.Model.extend("Animal", {}, {
-            __alert: function() {
-                console.log("Hello");
-            },
-            alert: function() {
-                this.__alert();
+        var Animal = m_.Model.extend({
+            name: "Animal",
+            methods:  {
+                privateAlert: {
+                    private: true,
+                    method: function() {
+                        console.log("Hello");
+                    }
+                },
+                alert: function() {
+                    this.privateAlert();
+                }
             }
         });
 
@@ -318,10 +339,13 @@ Will throw an error any time you set the value of that property to null, undefin
 - **readOnly**: A boolean indicating if the property can be changed after the constructor has completed.
 - **defaultValue**: The default value to use for this property if none is specified in the constructor
 
-        var Animal = m_.Model.extend("Animal", {
-            age: {
-                type: "integer",
-                defaultValue: 1
+        var Animal = m_.Model.extend({
+            name: "Animal",
+            properties: {
+                age: {
+                    type: "integer",
+                    defaultValue: 1
+                }
             }
         });
 
@@ -336,21 +360,25 @@ Will throw an error any time you set the value of that property to null, undefin
 
 - **Adjuster**: You can add an adjuster method for your property to adjust the value being set.
 
-        var Animal = m_.Model.extend("Animal", {
-            first_name: {
-                type: "string"
-            }
-        }, {
-            // If the name evaluates to falsy, use the previous name or "Fred".
-            adjustFirstName: function(inValue) {
-                if (!inValue) {
-                    if (this.first_name) {
-                        return this.first_name;
-                    } else {
-                        return "Fred";
-                    }
+        var Animal = m_.Model.extend({
+            name: "Animal",
+            properties: {
+                first_name: {
+                    type: "string"
                 }
-                // If no return, then inValue is accepted as is
+            },
+            methods: {
+                // If the name evaluates to falsy, use the previous name or "Fred".
+                adjustFirstName: function(inValue) {
+                    if (!inValue) {
+                        if (this.first_name) {
+                            return this.first_name;
+                        } else {
+                            return "Fred";
+                        }
+                    }
+                    // If no return, then inValue is accepted as is
+                }
             }
         });
 
@@ -370,16 +398,20 @@ Will throw an error any time you set the value of that property to null, undefin
     - The adjuster will cause autoAdjust to be ignored.
 - **Validator**: You can add a custom validator for your property.
 
-        var Animal = m_.Model.extend("Animal", {
-            first_name: {
-                type: "integer",
-                defaultValue: 1
-            }
-        }, {
-            // Accepts all names except "Kermit"
-            validateSetFirstName: function(inValue) {
-                if (inValue == "Kermit") {
-                    return "There can be only one!" // immortal frog
+        var Animal = m_.Model.extend({
+            name: "Animal",
+            properties: {
+                first_name: {
+                    type: "integer",
+                    defaultValue: 1
+                }
+            },
+            methods: {
+                // Accepts all names except "Kermit"
+                validateSetFirstName: function(inValue) {
+                    if (inValue == "Kermit") {
+                        return "There can be only one!" // immortal frog
+                    }
                 }
             }
         });
@@ -431,14 +463,22 @@ The following events are built into the Model
 - destroy: The object has been destroyed
 
 # Static methods/properties
-m_.extend(*className*, *propertyDefinitions*, *functionDefintions*, *staticDefinitions*)
+m_.extend({statics: *staticDefinitions*})
 
 Static methods add your methods to the class definition:
 
-        m_.extend("Person", {}, {}, {
-            people: [],
-            eatThemAll: function() {
-                Person.people.forEach(function(person){ person.isEaten();});
+        m_.extend({
+            name: "Person",
+            methods: {
+                isEaten: function() {
+                    alert("Ouch!");
+                }
+            },
+            statics: {
+                people: [],
+                eatThemAll: function() {
+                    Person.people.forEach(function(person){ person.isEaten();});
+                }
             }
         })
         Person.eatThemAll();
@@ -447,8 +487,11 @@ Static methods add your methods to the class definition:
 The static method *init* is called as soon as the class is defined, allowing static setup
 to be done:
 
-        m_.extend("Person", {}, {}, {
-            init: function() {
-               alert(this.name + " has been created");
+        m_.extend({
+            name: "Person",
+            statics: {
+                init: function() {
+                   alert(this.name + " has been created");
+                }
             }
         });

@@ -46,22 +46,26 @@ describe("PrivateModel", function() {
         var Person, p;
 
         beforeEach(function() {
-            Person = m_.Model.extend("Person", genericPersonDef, {
-                setMiddleName: function(inName) {
-                    this.middleName = inName;
-                },
-                getMiddleName: function() {
-                    return this.middleName;
-                },
-                asyncSetMiddleName: function(inName) {
-                    var setter = this.setMiddleName.bind(this);
-                    setter(inName);
-                },
-                anonymousSetMiddleName: function(inName) {
-                    var f = function(inName) {
+            Person = m_.Model.extend({
+                name: "Person",
+                properties: genericPersonDef,
+                methods: {
+                    setMiddleName: function(inName) {
                         this.middleName = inName;
-                    };
-                    f.bind(this)(inName);
+                    },
+                    getMiddleName: function() {
+                        return this.middleName;
+                    },
+                    asyncSetMiddleName: function(inName) {
+                        var setter = this.setMiddleName.bind(this);
+                        setter(inName);
+                    },
+                    anonymousSetMiddleName: function(inName) {
+                        var f = function(inName) {
+                            this.middleName = inName;
+                        };
+                        f.bind(this)(inName);
+                    }
                 }
             });
             p = new Person({});
@@ -115,8 +119,12 @@ describe("PrivateModel", function() {
                 type: "string",
                 defaultValue: "Howdy"
             };
-            var Person = m_.Model.extend("Person", genericPersonDef, {
-                getData: function() {return this.myProtectedData;}
+            var Person = m_.Model.extend({
+                name: "Person",
+                properties: genericPersonDef,
+                methods:    {
+                    getData: function() {return this.myProtectedData;}
+                }
             });
             var p = new Person();
             expect(p.getData()).toEqual("Howdy");
@@ -128,18 +136,26 @@ describe("PrivateModel", function() {
                 type: "string",
                 defaultValue: "Howdy"
             };
-            var Person = m_.Model.extend("Person", genericPersonDef, {
-                getData: function() {return this.myProtectedData;}
+            var Person = m_.Model.extend({
+                name: "Person",
+                properties: genericPersonDef,
+                methods: {
+                    getData: function() {return this.myProtectedData;}
+                }
             });
 
-            GradStudent = Person.extend("GradStudent", {
-                yearInSchool: {
-                    type: "integer",
-                    private: true,
-                    defaultValue: 3
+            GradStudent = Person.extend({
+                name: "GradStudent",
+                properties: {
+                    yearInSchool: {
+                        type: "integer",
+                        private: true,
+                        defaultValue: 3
+                    }
+                },
+                methods: {
+                    getYearData: function() {return this.yearInSchool;}
                 }
-            }, {
-                getYearData: function() {return this.yearInSchool;}
             });
 
             var p = new GradStudent();
@@ -157,9 +173,13 @@ describe("PrivateModel", function() {
                 defaultValue: 105
             };
 
-            var Person2 = m_.Model.extend("Person2", genericPersonDef, {
-                setData: function() {this.personPrivateId = 56;},
-                getData: function() {return this.personPrivateId;}
+            var Person2 = m_.Model.extend({
+                name: "Person2",
+                properties: genericPersonDef,
+                methods: {
+                    setData: function() {this.personPrivateId = 56;},
+                    getData: function() {return this.personPrivateId;}
+                }
             });
             p = new Person2({personPrivateId: 55});
             expect(p.getData()).toEqual(55);
@@ -174,7 +194,7 @@ describe("PrivateModel", function() {
         });
 
         it("privateSetter should allow us to see the value but not change the value", function() {
-            Person = m_.Model.extend("Person", genericPersonDef);
+            Person = m_.Model.extend({name: "Person", properties: genericPersonDef});
             var p = new Person();
             expect(p.age).toEqual(13);
             p.age = 5;
@@ -182,9 +202,13 @@ describe("PrivateModel", function() {
         });
 
         it("privateSetter should allow class to change its value", function() {
-            Person = m_.Model.extend("Person", genericPersonDef, {
-                setAge: function(v) {
-                    this.age = v;
+            Person = m_.Model.extend({
+                name: "Person",
+                properties: genericPersonDef,
+                methods: {
+                    setAge: function(v) {
+                        this.age = v;
+                    }
                 }
             });
             var p = new Person();
@@ -194,24 +218,36 @@ describe("PrivateModel", function() {
         });
 
         it("Private methods should restrict access", function() {
-            Person = m_.Model.extend("Person", genericPersonDef, {
-                __setAge: function(v) {
-                    this.age = v;
+            Person = m_.Model.extend({
+                name: "Person",
+                properties: genericPersonDef,
+                methods: {
+                    setAge: function(v) {
+                        this.setAgePrivate(v);
+                    },
+
+                    setAgePrivate: {
+                        private: true,
+                        method: function(v) {
+                            this.age = v;
+                        }
+                    }
                 },
-                setAge: function(v) {
-                    this.__setAge(v);
-                }
-            },
-            // Statics
-            {
-                getOldPerson: function() {
-                    var p = new Person();
-                    p.__setAge(1000);
-                    return p;
+
+
+                statics: {
+                    getOldPerson: function() {
+                        var p = new Person();
+                        p.setAgePrivate(1000);
+                        return p;
+                    }
                 }
             });
+
+
+
             var p = new Person();
-            expect(p.__setAge).toBe(undefined);
+            expect(p.setAgePrivate).toBe(undefined);
 
             p.setAge(55);
 

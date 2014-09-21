@@ -40,7 +40,7 @@ describe("Model", function() {
     describe("Verify Extend Process", function() {
         var Person, p;
         beforeEach(function() {
-            Person = m_.Model.extend("Person", genericPersonDef);
+            Person = m_.Model.extend({name:"Person", properties:genericPersonDef});
             p = new Person({});
         });
 
@@ -161,7 +161,7 @@ describe("Model", function() {
             genericPersonDef.parent = {
                 type: "Person"
             }
-            var Person = m_.Model.extend("Person", genericPersonDef);
+            var Person = m_.Model.extend({name:"Person", properties:genericPersonDef});
 
             var kermit = new Person();
 
@@ -183,7 +183,7 @@ describe("Model", function() {
             genericPersonDef.parents = {
                 type: "[Person]"
             }
-            var Person = m_.Model.extend("Person", genericPersonDef);
+            var Person = m_.Model.extend({name:"Person", properties:genericPersonDef});
             var kermit = new Person();
             var piggy = new Person();
             var babyKermit = new Person({parents: [kermit, piggy]});
@@ -208,19 +208,26 @@ describe("Model", function() {
 
         it("Test custom init", function() {
             var result = false;
-            var Dog = m_.Model.extend("Dog", genericPersonDef, {
-                init: function(inargs) {
-                    result = true;
+            var Dog = m_.Model.extend({
+                name: "Dog",
+                properties: genericPersonDef,
+                methods: {
+                    init: function(inargs) {
+                        result = true;
+                    }
                 }
             });
             var d = new Dog();
             expect(result).toEqual(true);
 
-            var Poodle = Dog.extend("Poodle", {}, {
-                init: function(params, a, b) {
-                    expect(params).toEqual({a:5});
-                    expect(a).toEqual(8);
-                    expect(b).toEqual("Fred");
+            var Poodle = Dog.extend({
+                name: "Poodle",
+                methods: {
+                    init: function(params, a, b) {
+                        expect(params).toEqual({a:5});
+                        expect(a).toEqual(8);
+                        expect(b).toEqual("Fred");
+                    }
                 }
             });
             var p = new Poodle({a:5}, 8, "Fred");
@@ -228,9 +235,13 @@ describe("Model", function() {
         });
 
         it("Test custom methods", function() {
-            var Dog = m_.Model.extend("Dog", genericPersonDef, {
-                eatMe: function(inargs) {
-                    this.isAlive = false;
+            var Dog = m_.Model.extend({
+                name: "Dog",
+                properties: genericPersonDef,
+                methods: {
+                    eatMe: function(inargs) {
+                        this.isAlive = false;
+                    }
                 }
             });
             var d = new Dog({isAlive: true});
@@ -240,9 +251,13 @@ describe("Model", function() {
         });
 
         it("Test custom Validator", function() {
-            var Dog = m_.Model.extend("Dog", genericPersonDef, {
-                validateSetAge: function(inValue) {
-                    if (inValue > 20) return "Dogs don't live to be " + inValue;
+            var Dog = m_.Model.extend({
+                name: "Dog",
+                properties: genericPersonDef,
+                methods: {
+                    validateSetAge: function(inValue) {
+                        if (inValue > 20) return "Dogs don't live to be " + inValue;
+                    }
                 }
             });
 
@@ -266,9 +281,13 @@ describe("Model", function() {
         });
 
         it("Test custom adjuster", function() {
-            var Dog = m_.Model.extend("Dog", genericPersonDef, {
-                adjustAge: function(inValue) {
-                    if (inValue > 20) return 20;
+            var Dog = m_.Model.extend({
+                name: "Dog",
+                properties: genericPersonDef,
+                methods: {
+                    adjustAge: function(inValue) {
+                        if (inValue > 20) return 20;
+                    }
                 }
             });
             var d = new Dog({age: 25});
@@ -295,12 +314,15 @@ describe("Model", function() {
                 type: "string",
                 defaultValue: "Howdy"
             };
-            var Person = m_.Model.extend("Person", genericPersonDef);
+            var Person = m_.Model.extend({name:"Person", properties:genericPersonDef});
 
-            GradStudent = Person.extend("GradStudent", {
-                yearInSchool: {
-                    type: "integer",
-                    defaultValue: 3
+            GradStudent = Person.extend({
+                name: "GradStudent",
+                properties: {
+                    yearInSchool: {
+                        type: "integer",
+                        defaultValue: 3
+                    }
                 }
             });
 
@@ -327,7 +349,7 @@ describe("Model", function() {
                 type: "number",
                 required: true
             };
-            var Person = m_.Model.extend("Person", genericPersonDef);
+            var Person = m_.Model.extend({name:"Person", properties:genericPersonDef});
             expect(function() {
                 new Person({});
             }).toThrowError("value: is required");
@@ -353,7 +375,7 @@ describe("Model", function() {
                 type: "string",
                 required: true
             };
-            Person = m_.Model.extend("Person", genericPersonDef);
+            Person = m_.Model.extend({name:"Person", properties:genericPersonDef});
             expect(function() {
                 p = new Person({value: ""});
             }).toThrowError("value: is required");
@@ -369,7 +391,7 @@ describe("Model", function() {
                 type: "boolean",
                 required: true
             };
-            Person = m_.Model.extend("Person", genericPersonDef);
+            Person = m_.Model.extend({name:"Person", properties:genericPersonDef});
             p = new Person({value: false});
         });
     });
@@ -381,59 +403,71 @@ describe("Model", function() {
         beforeEach(function() {
             result = "";
             result2 = "";
-            Person = m_.Model.extend("Person", genericPersonDef, {
-                init: function() {
-                    result2 += "ho";
-                    this.$super();
-                },
-                runTest: function() {
-                    result += "Person";
-                    this.$super();
-                },
-                runTest2: function(){
-                    result += "Person";
-                    this.$super();
-                },
-                runTest3: function(a,b,c) {
-                    return (this.$super() || "") +  a + ":" + b + ":" + c;
+            Person = m_.Model.extend({
+                name: "Person",
+                properties: genericPersonDef,
+                methods: {
+                    init: function() {
+                        result2 += "ho";
+                        this.$super();
+                    },
+                    runTest: function() {
+                        result += "Person";
+                        this.$super();
+                    },
+                    runTest2: function(){
+                        result += "Person";
+                        this.$super();
+                    },
+                    runTest3: function(a,b,c) {
+                        return (this.$super() || "") +  a + ":" + b + ":" + c;
+                    }
                 }
             });
-            GradStudent = Person.extend("GradStudent", {
-                yearInSchool: {
-                    type: "integer"
+            GradStudent = Person.extend({
+                name: "GradStudent",
+                properties: {
+                    yearInSchool: {
+                        type: "integer"
+                    },
+                    grade: {
+                        type: "string"
+                    }
                 },
-                grade: {
-                    type: "string"
-                }
-            }, {
-                init: function() {
-                    result2 += "hey";
-                    this.$super();
-                },
-                runTest: function() {
-                    result += "GradStudent";
-                    this.$super();
-                },
-                runTest3: function(a,b,c) {
-                    return (this.$super("a","b","c") || "") +  a + ":" + b + ":" + c;
+                methods: {
+                    init: function() {
+                        result2 += "hey";
+                        this.$super();
+                    },
+                    runTest: function() {
+                        result += "GradStudent";
+                        this.$super();
+                    },
+                    runTest3: function(a,b,c) {
+                        return (this.$super("a","b","c") || "") +  a + ":" + b + ":" + c;
+                    }
                 }
             });
 
-            Newbie = GradStudent.extend("Newbie", {
-                confusion: {
-                    type: "double"
-                }
-            }, {
-                runTest: function runTest() {
-                    result += "Newbie";
-                    this.$super();
+            Newbie = GradStudent.extend({
+                name: "Newbie",
+                properties: {
+                    confusion: {
+                        type: "double"
+                    }
                 },
-                runTest2: function(){
-                    result += "Newbie";
-                    this.$super();
-                },
-                runTest3: function(a,b,c) {
-                    return (this.$super() || "") +  a + ":" + b + ":" + c;
+                methods: {
+                    runTest: function runTest() {
+                        result += "Newbie";
+                        this.$super();
+                    },
+                    runTest2: function(){
+                        result += "Newbie";
+                        this.$super();
+                    },
+                    runTest3: function(a,b,c) {
+                        return (this.$super() || "") +  a + ":" + b + ":" + c;
+                    }
                 }
             });
 
@@ -466,10 +500,10 @@ describe("Model", function() {
         });
 
         it("Constructor should register classes in the specified name space", function() {
-            var result = m_.Model.extend("abc.def.ghi",{});
+            var result = m_.Model.extend({name: "abc.def.ghi"});
             expect(window.abc.def.ghi).toEqual(result);
 
-            m_.Model.extend("Frog",{});
+            m_.Model.extend({name:"Frog"});
             expect(window.Frog).toBe(undefined);
         });
     });
@@ -478,7 +512,7 @@ describe("Model", function() {
 
     describe("Test Events", function() {
         it("Basic events should work", function() {
-            var Person = m_.Model.extend("Person", genericPersonDef);
+            var Person = m_.Model.extend({name:"Person", properties:genericPersonDef});
             var p = new Person();
             var count = 0;
 
@@ -494,7 +528,7 @@ describe("Model", function() {
 
 
         it("Basic events hash should work", function() {
-            var Person = m_.Model.extend("Person", genericPersonDef);
+            var Person = m_.Model.extend({name:"Person", properties:genericPersonDef});
             var p = new Person();
             var count1 = 0, count2 = 0;
 
@@ -521,7 +555,7 @@ describe("Model", function() {
         });
 
         it("Basic events hash in constructor should work", function() {
-            var Person = m_.Model.extend("Person", genericPersonDef);
+            var Person = m_.Model.extend({name:"Person", properties:genericPersonDef});
             var count1 = 0, count2 = 0;
             var p = new Person({
                 events:{
@@ -548,7 +582,7 @@ describe("Model", function() {
         });
 
         it("Should allow for unsubscribe", function() {
-            var Person = m_.Model.extend("Person", genericPersonDef);
+            var Person = m_.Model.extend({name:"Person", properties:genericPersonDef});
             var p = new Person();
             var count = 0;
 
@@ -582,7 +616,7 @@ describe("Model", function() {
         });
 
         it("once should work", function() {
-            var Person = m_.Model.extend("Person", genericPersonDef);
+            var Person = m_.Model.extend({name:"Person", properties:genericPersonDef});
             var p = new Person();
             var count = 0;
 
@@ -598,7 +632,7 @@ describe("Model", function() {
 
 
         it("Should allow events to trigger when properties change", function() {
-            var Person = m_.Model.extend("Person", genericPersonDef);
+            var Person = m_.Model.extend({name:"Person", properties:genericPersonDef});
             var p = new Person({firstName: "Fred"});
             var count = 0;
             var newValue = "";
@@ -623,7 +657,7 @@ describe("Model", function() {
         });
 
         it("Should allow global change events to trigger when properties change", function() {
-            var Person = m_.Model.extend("Person", genericPersonDef);
+            var Person = m_.Model.extend({name:"Person", properties:genericPersonDef});
             var p = new Person({firstName: "Fred"});
             var count = 0;
             var newValue = "";
@@ -644,7 +678,7 @@ describe("Model", function() {
         });
 
         it("Should silence events if using the SilentValue object", function() {
-            var Person = m_.Model.extend("Person", genericPersonDef);
+            var Person = m_.Model.extend({name:"Person", properties:genericPersonDef});
             var p = new Person();
             var eventTriggered = false;
             p.on("change", function() {
@@ -661,7 +695,7 @@ describe("Model", function() {
         });
 
         it("Should notify on being destroyed", function() {
-            var Person = m_.Model.extend("Person", genericPersonDef);
+            var Person = m_.Model.extend({name:"Person", properties:genericPersonDef});
             var p = new Person();
             var eventTriggeredOn = null;
             p.on("destroy", function(person) {
@@ -681,7 +715,7 @@ describe("Model", function() {
         });
 
         it("Should allow setting an array of integers", function() {
-            var Person = m_.Model.extend("Person", genericPersonDef);
+            var Person = m_.Model.extend({name:"Person", properties:genericPersonDef});
             var p = new Person({scores: [1,3,9]});
 
             expect(p.scores).toEqual([1,3,9]);
