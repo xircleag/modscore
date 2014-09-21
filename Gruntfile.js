@@ -113,10 +113,32 @@ module.exports = function(grunt) {
 				push: false
 			}
 		},
+		/* Do not use --save on this as we don't need this in docker:
+		 * > npm install superstartup-closure-compiler
+		 * > npm install grunt-closure-tools
+		 * This task is used only to do a quick validation of each individual file
+		 * without the noise of a linter.
+		 */
+		closureCompiler:  {
 
+		  	options: {
+			    // [REQUIRED] Path to closure compiler
+			    compilerFile: 'node_modules/superstartup-closure-compiler/build/compiler.jar',
+			    checkModified: true,
+			    compilerOpts: {
+			    	compilation_level: "WHITESPACE_ONLY",
+			    	summary_detail_level: 1,
+			    	warning_level: "QUIET"
+			    }
+			},
+			layerjs: {
+				src: ['js/*.js'],
+				dest: "tmp/tmp.js"
+			}
+		},
 		watch: {
 		  	files: ['js/*.js', '<%= jasmine.modscore.options.specs %>', "Gruntfile.js"],
-		   	tasks: ['browserify', 'jasmine', 'jsduck', 'buildGitReadme'] /* Concat lets us test in our local dev env and won't get done if we run/fail tests first. */
+		   	tasks: ['closureCompiler', 'browserify', 'jasmine', 'jsduck', 'buildGitReadme'] /* Concat lets us test in our local dev env and won't get done if we run/fail tests first. */
 		}
 	});
 
@@ -127,8 +149,9 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-browserify');
  	grunt.loadNpmTasks('grunt-notify');
 	grunt.loadNpmTasks('grunt-bump');
+	grunt.loadNpmTasks('grunt-closure-tools');
 
-  	grunt.registerTask('default', ['browserify', 'jasmine', 'jsduck', 'buildGitReadme', 'uglify', 'removeDebuggers']);
+  	grunt.registerTask('default', ['closureCompiler', 'browserify', 'jasmine', 'jsduck', 'buildGitReadme', 'uglify', 'removeDebuggers']);
 
   	grunt.registerTask('jenkins', ['browserify', 'jasmine', 'jsduck', 'buildGitReadme', 'uglify', 'removeDebuggers']);
 
