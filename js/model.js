@@ -554,6 +554,7 @@
 
             /* For each property passed in via the constructor, set the appropriate private/public value */
             var defs = this.__class.$meta.properties;
+            this.__values.__processConstructorParams = true;
             m_.each(defs, function(def, name) {
                 if (name in params) {
                     this[name] = params[name];
@@ -561,6 +562,7 @@
                     this[name] = [];
                 }
             }, this);
+            delete this.__values.__processConstructorParams;
 
             /* For each unset property with a default value, set the appropriate private/public value */
             var allDefaults = this.__class.$meta.defaults;
@@ -722,10 +724,10 @@
         var internalName = getInternalName(name);
         var originalValue = values[internalName];
         if (originalValue !== inValue) {
-            // Do not set a private array to be a pointer passed into the
+// Do not set a private array to be a pointer passed into the
             // constructor... that pointer is something that the caller of the
             // constructor can modify at will, making it not very private.
-            if (this.__values.__notinitialized && def.private && m_.isArray(inValue)) inValue = inValue.concat([]);
+            if (this.__values.__processConstructorParams && def.private && m_.isArray(inValue)) inValue = inValue.concat([]);
             values[internalName] = inValue;
             if (!silent) {
                 this.trigger("change:" + name, inValue, originalValue);
