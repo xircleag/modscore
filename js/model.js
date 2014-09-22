@@ -658,7 +658,7 @@
          */
         adjuster = this["adjust" + m_.camelCase(name, true)];
         if (adjuster) {
-            altValue = adjuster(inValue);
+            altValue = adjuster.call(this, inValue);
             if (altValue !== undefined) inValue = altValue;
         } else if (def.autoAdjust) {
             adjuster = this["autoAdjust" + m_.camelCase(def.type, true)];
@@ -722,6 +722,10 @@
         var internalName = getInternalName(name);
         var originalValue = values[internalName];
         if (originalValue !== inValue) {
+            // Do not set a private array to be a pointer passed into the
+            // constructor... that pointer is something that the caller of the
+            // constructor can modify at will, making it not very private.
+            if (this.__values.__notinitialized && def.private && m_.isArray(inValue)) inValue = inValue.concat([]);
             values[internalName] = inValue;
             if (!silent) {
                 this.trigger("change:" + name, inValue, originalValue);
