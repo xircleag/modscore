@@ -292,15 +292,21 @@ describe("Miniunderscore", function() {
             describe("m_.defer", function() {
                 it("Fires after 1 milisecond", function() {
                     m_.defer(timerCallback);
+                    m_.defer(timerCallback);
+                    m_.defer(timerCallback);
+                    m_.defer(timerCallback);
+                    m_.defer(timerCallback);
                     expect(timerCallback.calls.count()).toEqual(0);
                     jasmine.clock().tick(1);
-                    expect(timerCallback.calls.count()).toEqual(1);
+                    expect(timerCallback.calls.count()).toEqual(5);
                 });
 
                 it("Passes all arguments", function() {
                     m_.defer(timerCallback, this, "fred", 5, "john", 2);
+                    m_.defer(timerCallback, this, "fred", 5, "john", 2);
+                    m_.defer(timerCallback, this, "fred", 5, "john", 2);
                     jasmine.clock().tick(1);
-                    expect(timerCallback.calls.argsFor(0)).toEqual(["fred", 5, "john", 2]);
+                    expect(timerCallback.calls.argsFor(1)).toEqual(["fred", 5, "john", 2]);
                 });
             });
 

@@ -234,19 +234,46 @@
 
   /**
    * Defers a function, scheduling it to run after the current call stack has
-   * cleared.  Simplified version of window.setTimeout(f.bind(a,b,c,...), 1)
+   * cleared.  Note that all defered processes will run in the same "next thread".
+   * If your defered process is too large to share a thread, use window.setTimout
+   * directly.
    * @method defer
    * @param {Function} func - The function to call after a delay
    * @param {Object} [context] - The this pointer; required if you are passing in function args
    * @param {...any} args - Any arguments that you want passed into func when its called
    */
+  _.__deferState = {
+    pid: null,
+    processes: []
+  },
   _.defer = function(func, context) {
     var args = Array.prototype.slice.call(arguments);
     args.shift();args.shift();
-    setTimeout(function(){
+    _.__deferState.processes.push(function(){
       func.apply(context, args);
-    }, 1);
+    });
+
+    if (!_.__deferState.pid) {
+      _.__deferState.pid = window.setTimeout(_.__processDeferState, 1);
+    }
   };
+  _.__processDeferState = function() {
+      var processes = _.__deferState.processes;
+
+      // Any calls to _.defer while running these processes will go in the next thread,
+      // not this thread.
+      _.__deferState.pid = null;
+      _.__deferState.processes = [];
+
+      processes.forEach(function(f) {
+        try {
+          f();
+        } catch(e) {
+          console.error("Error in m_.defer process: " + e);
+        };
+    });
+  }
+
 
 
   /**
