@@ -532,44 +532,46 @@ describe("Miniunderscore", function() {
         });
 
         describe("m_.defaults", function() {
+            var cDefault = function() {};
             var h = function(init) {
                 this.d = "locked";
-                m_.defaults(this, init, {a: 101, b: 102, c: function cDefault() {}});
+                m_.defaults(this, init, {a: 101, b: 102, c: cDefault});
             };
 
             it("Test with empty object should init with builtin defaults", function() {
                 var result = new h({});
                 expect(result.a).toEqual(101);
                 expect(result.b).toEqual(102);
-                expect(result.c.name).toEqual("cDefault");
+                expect(result.c).toBe(cDefault);
             });
 
             it("Test with null should init with builtin defaults", function() {
                 var result = new h(null);
                 expect(result.a).toEqual(101);
                 expect(result.b).toEqual(102);
-                expect(result.c.name).toEqual("cDefault");
+                expect(result.c).toBe(cDefault);
             });
 
             it("Override a property", function() {
                 var result = new h({a: "fred"});
                 expect(result.a).toEqual("fred");
                 expect(result.b).toEqual(102);
-                expect(result.c.name).toEqual("cDefault");
+                expect(result.c).toBe(cDefault);
             });
 
             it("Add a property", function() {
                 var result = new h({z: "fred"});
                 expect(result.z).toEqual("fred");
                 expect(result.b).toEqual(102);
-                expect(result.c.name).toEqual("cDefault");
+                expect(result.c).toBe(cDefault);
             });
 
             it("Override a function", function() {
-                var result = new h({c: function cNew(){}});
+                var cNew = function() {};
+                var result = new h({c: cNew});
                 expect(result.a).toEqual(101);
                 expect(result.b).toEqual(102);
-                expect(result.c.name).toEqual("cNew");
+                expect(result.c).toBe(cNew);
             });
 
             it("Can't change existing value unless its undefined", function() {
