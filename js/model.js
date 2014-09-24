@@ -534,11 +534,12 @@
     var modelInit = false;
     // NOTE: May have to change this once we start using browserify
 
-    var isNode = typeof global !== 'undefined' && typeof window === 'undefined' || navigator.userAgent.match(/PhantomJS/);
+    var isNode = typeof global !== "undefined" && typeof window === "undefined" || navigator.userAgent.match(/PhantomJS/);
 
     var SilentValue = m_.SilentValue = function(inValue) {
         this.value = inValue;
     };
+    var classRegistry = {};
 
     var Model = function(params) {
         if (!modelInit) {
@@ -558,7 +559,7 @@
             m_.each(defs, function(def, name) {
                 if (name in params) {
                     this[name] = params[name];
-                } else if (def.type.indexOf("[") == 0) {
+                } else if (def.type.indexOf("[") === 0) {
                     this[name] = [];
                 }
             }, this);
@@ -589,7 +590,7 @@
     Model.prototype._events = {};
 
 
-    function isPrivateAllowed(caller, callerName) {
+    function isPrivateAllowed(caller) {
         if (this.__values.__notinitialized) return true;
 
         // should only happen from nodejs
@@ -601,7 +602,7 @@
         if (!callerFuncName) return false;
 
         // Static methods should have access to private methods?
-        if (callerFuncName.indexOf("STATIC ") == 0) {
+        if (callerFuncName.indexOf("STATIC ") === 0) {
             callerFuncName = callerFuncName.substring(7);
             if (!this.__class[callerFuncName] || this.__class[callerFuncName] != caller) return false;
         } else {
@@ -694,7 +695,7 @@
             }
             if (validatorResult) throw new Error(name + ": " + validatorResult);
         } else if (inValue !== null && def.type != "any" && def.type != "[any]") {
-            var validator = function(inValue, type) {
+            validator = function(inValue, type) {
                 if (classRegistry[type]) {
                     if (!(inValue instanceof classRegistry[type])) {
                         throw name + ": must be of type " + type;
@@ -803,34 +804,35 @@
     function validateSetInteger(inValue) {
         if (typeof inValue != "number") return inValue + " is of type " + (typeof inValue) + " not number";
         if (isNaN(inValue)) return inValue + " is not a number";
-        if (inValue % 1 != 0) return inValue + " is not an integer";
-    };
+        if (inValue % 1 !== 0) return inValue + " is not an integer";
+    }
 
     function validateSetDouble(inValue) {
         if (typeof inValue != "number") return inValue + " is of type " + (typeof inValue) + " not number";
         if (isNaN(inValue)) return inValue + " is not a number";
-    };
+    }
 
     function validateSetString(inValue) {
         if (typeof inValue != "string") return inValue + " is of type " + (typeof inValue) + " not string";
-    };
+    }
 
     function validateSetBoolean(inValue) {
         if (typeof inValue != "boolean") return inValue + " is of type " + (typeof inValue) + " not boolean";
-    };
+    }
 
     function validateSetDate(inValue) {
         if (!(inValue instanceof Date)) return inValue + " is not a Date";
         if (isNaN(inValue.getTime())) return inValue + " is not a valid Date";
-    };
+    }
 
     function validateSetObject(inValue) {
         if (typeof inValue != "object") return inValue + " is of type " + (typeof inValue) + " not object";
-    };
+    }
 
     Model.prototype.autoAdjustInteger = function(inValue) {
         if (typeof inValue == "string" && !isNaN(inValue)) return Number(inValue);
     };
+
     Model.prototype.autoAdjustDouble = Model.prototype.autoAdjustInteger;
 
     Model.prototype.autoAdjustBoolean = function(inValue) {
@@ -891,7 +893,7 @@
             args = arguments.length ? arguments : caller.arguments;
             return f.apply(this, args);
         }
-    }
+    };
 
     /**
      * Creates a JSON structure using only the non-private properties of the object
@@ -913,7 +915,7 @@
     function makeCtor(name) {
         var parts = name.split(/\./);
         var subname = parts[parts.length-1];
-        result = eval("function " + subname + "(){this.__class = " + subname + "; Model.apply(this, arguments);}; " + subname);
+        var result = eval("function " + subname + "(){this.__class = " + subname + "; Model.apply(this, arguments);}; " + subname);
         if (parts.length > 1) {
             var obj = window;
             for (var i = 0; i < parts.length - 1; i++) {
@@ -969,7 +971,6 @@
             }
      * @returns {Function} - Returns a class definition which can be used to create instances of the class
      */
-    var classRegistry = {};
     Model.extend = function(args) {
         var className = args.name || "Anonymous",
             shortName = className.replace(/^.*\./,""),

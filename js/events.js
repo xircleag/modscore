@@ -60,8 +60,8 @@
             this.on(name, evtDef, context);
         }, this);
       } else {
-        if (!eventsApi(this, 'on', name, [callback, context]) || !callback) return this;
-        this._events || (this.clearEvents());
+        if (!eventsApi(this, "on", name, [callback, context]) || !callback) return this;
+        if (!this._events) this.clearEvents();
         var events = this._events[name] || (this._events[name] = []);
         events.push({callback: callback, context: context, ctx: context || this});
       }
@@ -71,7 +71,7 @@
     // Bind an event to only be triggered a single time. After the first time
     // the callback is invoked, it will be removed.
     once: function(name, callback, context) {
-      if (!eventsApi(this, 'once', name, [callback, context]) || !callback) return this;
+      if (!eventsApi(this, "once", name, [callback, context]) || !callback) return this;
       var self = this;
       var once = m_.once(function() {
         self.off(name, once);
@@ -87,7 +87,7 @@
     // callbacks for all events.
     off: function(name, callback, context) {
       var retain, ev, events, names, i, l, j, k;
-      if (!this._events || !eventsApi(this, 'off', name, [callback, context])) return this;
+      if (!this._events || !eventsApi(this, "off", name, [callback, context])) return this;
       if (!name && !callback && !context) {
         this.clearEvents();
         return this;
@@ -96,7 +96,8 @@
       names = name ? [name] : m_.keys(this._events);
       for (i = 0, l = names.length; i < l; i++) {
         name = names[i];
-        if (events = this._events[name]) {
+        events = this._events[name];
+        if (events) {
           this._events[name] = retain = [];
           if (callback || context) {
             for (j = 0, k = events.length; j < k; j++) {
@@ -121,7 +122,7 @@
     trigger: function(name) {
       if (!this._events) return this;
       var args = Array.prototype.slice.call(arguments, 1);
-      if (!eventsApi(this, 'trigger', name, args)) return this;
+      if (!eventsApi(this, "trigger", name, args)) return this;
       var events = this._events[name];
       var allEvents = this._events.all;
       if (events) triggerEvents(events, args);
@@ -141,7 +142,7 @@
     if (!name) return true;
 
     // Handle event maps.
-    if (typeof name === 'object') {
+    if (typeof name === "object") {
       for (var key in name) {
         obj[action].apply(obj, [key, name[key]].concat(rest));
       }

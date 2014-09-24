@@ -12,13 +12,12 @@
   // --------------
 
   // Save bytes in the minified (but not gzipped) version:
-  var ArrayProto = Array.prototype, ObjProto = Object.prototype, FuncProto = Function.prototype;
+  var ObjProto = Object.prototype;
 
   // Create quick reference variables for speed access to core prototypes.
   var
-    slice            = ArrayProto.slice,
     toString         = ObjProto.toString,
-    hasOwnProperty   = ObjProto.hasOwnProperty;
+    hasOwn           = ObjProto.hasOwnProperty;
 
   // All **ECMAScript 5** native function implementations that we hope to use
   // are declared here.
@@ -33,7 +32,7 @@
   };
 
   // Current version.
-  _.VERSION = '1.0.0';
+  _.VERSION = "1.0.0";
 
   /**
    * Turns strings such as "xxx_yyy_zzz" into "xxxYyyZzz".
@@ -58,7 +57,7 @@
   var idCounters = {};
   _.uniqueId = function(prefix) {
     if (!(prefix in idCounters)) idCounters[prefix] = 0;
-    var id = ++idCounters[prefix]  + '';
+    var id = ++idCounters[prefix]  + "";
     return prefix ? prefix + id : id;
   };
 
@@ -74,7 +73,7 @@
    * @param {Any} [context] - Context for the callback's this pointer
    */
   _.each = function(obj, callback, context) {
-    if (obj == null) return obj;
+    if (obj === null || typeof obj != "object") return obj;
     if (_.isArray(obj)) {
       obj.forEach(callback, context);
     } else {
@@ -245,7 +244,8 @@
   _.__deferState = {
     pid: null,
     processes: []
-  },
+  };
+
   _.defer = function(func, context) {
     var args = Array.prototype.slice.call(arguments);
     args.shift();args.shift();
@@ -257,6 +257,7 @@
       _.__deferState.pid = window.setTimeout(_.__processDeferState, 1);
     }
   };
+
   _.__processDeferState = function() {
       var processes = _.__deferState.processes;
 
@@ -270,9 +271,9 @@
           f();
         } catch(e) {
           console.error("Error in m_.defer process: " + e);
-        };
+        }
     });
-  }
+  };
 
 
 
@@ -347,7 +348,7 @@
   // Shortcut function for checking if an object has a given property directly
   // on itself (in other words, not on a prototype).
   _.has = function(obj, key) {
-    return obj != null && hasOwnProperty.call(obj, key);
+    return obj !== null && hasOwn.call(obj, key);
   };
 
   // Retrieve the names of an object's properties.
@@ -377,14 +378,15 @@
   // Michael: Useful primarily for _.matches function.
   // Convert an object into a list of `[key, value]` pairs.
   _.pairs = function(obj, recursive) {
-    var keys = _.keys(obj);
-    var length = keys.length;
-    var pairs = Array(length);
-    for (var i = 0; i < length; i++) {
+    var keys = _.keys(obj),
+      length = keys.length,
+      pairs = Array(length),
+      i;
+    for (i = 0; i < length; i++) {
       pairs[i] = [keys[i], obj[keys[i]]];
     }
     if (recursive) {
-      for (var i = 0; i < length; i++) {
+      for (i = 0; i < length; i++) {
         if (_.isObject(pairs[i][1]) && !_.isFunction(pairs[i][1])) {
           pairs[i][1] = _.pairs(pairs[i][1], true);
         }
@@ -421,7 +423,7 @@
     for (var i = 1, length = arguments.length; i < length; i++) {
       source = arguments[i];
       for (prop in source) {
-        if (hasOwnProperty.call(source, prop)) {
+        if (hasOwn.call(source, prop)) {
             obj[prop] = source[prop];
         }
       }
@@ -479,7 +481,7 @@
    * @returns {Boolean} - True if its an object with no properties. True if its an empty array. True if its a string of length 0
    */
   _.isEmpty = function(obj) {
-    if (obj == null) return true;
+    if (!Boolean(obj)) return true;
     if (_.isArray(obj) || typeof obj == "string" || _.isArguments(obj)) return obj.length === 0;
     for (var key in obj) if (_.has(obj, key)) return false;
     return true;
@@ -492,10 +494,10 @@
    * @returns {Boolean} - Is the value an Arguments object
    */
   _.isArguments = function(obj) {
-      if (toString.call(arguments) === '[object Arguments]') {
-        return toString.call(obj) == '[object Arguments]';
+      if (toString.call(arguments) === "[object Arguments]") {
+        return toString.call(obj) == "[object Arguments]";
       } else {
-        return _.has(obj, 'callee');
+        return _.has(obj, "callee");
       }
   };
 
@@ -516,7 +518,7 @@
    * @returns {Boolean} - Is the value an array
    */
   _.isArray = Array.isArray || function(obj) {
-    return toString.call(obj) === '[object Array]';
+    return toString.call(obj) === "[object Array]";
   };
 
   /**
@@ -529,7 +531,7 @@
    */
   _.isObject = function(obj) {
     var type = typeof obj;
-    return type === 'function' || type === 'object' && !!obj;
+    return type === "function" || type === "object" && !!obj;
   };
 
   /**
@@ -539,14 +541,14 @@
    * @returns {Boolean} - Is the value a function
    */
   _.isFunction = function(obj) {
-    return typeof obj == 'function' || false;
+    return typeof obj == "function" || false;
   };
 
     // Returns a predicate for checking whether an object has a given set of `key:value` pairs.
   _.matches = function(attrs) {
     var pairs = _.pairs(attrs, true), length = pairs.length;
     var returnFunc = function(obj) {
-      if (obj == null) return !length;
+      if (!Boolean(obj)) return !length;
       obj = new Object(obj);
       for (var i = 0; i < length; i++) {
         var pair = pairs[i], key = pair[0], val = pair[1];

@@ -144,6 +144,40 @@ module.exports = function(grunt) {
 				dest: "tmp/tmp.js"
 			}
 		},
+		jshint: {
+			options: {
+				curly: false,
+				eqeqeq: false,
+				camelcase: true,
+				freeze: true,
+				latedef: false,
+				noarg: false, // Wish we could support this; claims that code can't be optimized if we use arguments.caller
+				nonbsp: true,
+				nonew: true,
+				plusplus: false, // No i++ in loops???
+				quotmark	: "double",
+				undef: true,
+				"unused": true,
+				maxparams: 4,
+				maxdepth: 5,
+				evil: true, // NOTE: eval should not be used... unless absolutely needed
+				browser: true,
+				globals: {
+					m_: true,
+					layerjs: true,
+					"window": true,
+					"module": true,
+					"console": true,
+					"require": true
+
+				},
+			},
+
+			files: {
+				src: ['js/*.js']
+			}
+
+		},
 		connect: {
 			server: {
 		        options: {
@@ -242,12 +276,13 @@ module.exports = function(grunt) {
  	grunt.loadNpmTasks('grunt-notify');
 	grunt.loadNpmTasks('grunt-bump');
 	grunt.loadNpmTasks('grunt-closure-tools');
+	grunt.loadNpmTasks('grunt-contrib-jshint');
 	grunt.loadNpmTasks('grunt-contrib-connect');
 	grunt.loadNpmTasks('grunt-saucelabs');
 
 
   	grunt.registerTask('default', ['closureCompiler', 'browserify', 'jasmine', 'jsduck', 'buildGitReadme', 'uglify', 'removeDebuggers']);
-
+  	grunt.registerTask('precommit', ['closureCompiler', 'jshint', 'jasmine', 'sauce']);
   	grunt.registerTask('jenkins', ['browserify', 'jasmine', 'jsduck', 'buildGitReadme', 'uglify', 'removeDebuggers']);
 	//grunt.registerTask("sauce", ["connect", "watch"]);
 
