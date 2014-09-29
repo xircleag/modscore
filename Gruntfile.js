@@ -49,21 +49,50 @@ module.exports = function(grunt) {
 	grunt.initConfig({
 		credentials: credentials,
 		pkg: grunt.file.readJSON('package.json'),
+
 		jasmine: {
+			options: {
+				specs: ['jasmine/spec/overscoreSpec.js', 'jasmine/spec/modelSpec.js']
+			},
 			modscore: {
 				src: ["build/modscore.js"],
 				options: {
-					specs: ['jasmine/spec/overscoreSpec.js', 'jasmine/spec/modelSpec.js'],
 					summary: true,
 					message: "Jasmine Failed"
 				}
 			},
-			options: {}
+			coverage: {
+				src: ["coverage/modscore.js"],
+				options: {
+					summary: false,
+					display: "none",
+					template: require('grunt-template-jasmine-istanbul'),
+	                templateOptions: {
+	                    coverage: 'coverage/data/coverage.json',
+	                    report: [{type: "text"},
+	                    		 {type: "html", options: {dir:'coverage/report'}}],
+	                    thresholds: {
+	                        lines: 75,
+	                        statements: 75,
+	                        branches: 75,
+	                        functions: 90
+	                    }
+	                }
+				}
+			}
 		},
 		browserify: {
 		  	modscore: {
 			    files: {
 			      'build/modscore.js': ['js/browserify.js']
+			    }
+			},
+			coverage: {
+				files: {
+			      'coverage/modscore.js': ['js/browserify.js']
+			    },
+			    options: {
+			    	transform: ["istanbulify"]
 			    }
 			},
 			options: {}
@@ -263,12 +292,13 @@ module.exports = function(grunt) {
 		watch: {
 			modscore: {
 			  	files: ['js/*.js', '<%= jasmine.modscore.options.specs %>', "Gruntfile.js"],
-			   	tasks: ['closureCompiler', 'browserify', 'jasmine', 'jsduck', 'buildGitReadme'] /* Concat lets us test in our local dev env and won't get done if we run/fail tests first. */
+			   	tasks: ['closureCompiler', 'test', 'jsduck', 'buildGitReadme'] /* Concat lets us test in our local dev env and won't get done if we run/fail tests first. */
 			}
 		}
 	});
 
 	grunt.loadNpmTasks('grunt-contrib-jasmine');
+
 	grunt.loadNpmTasks('grunt-contrib-uglify');
 	grunt.loadNpmTasks('grunt-contrib-watch');
 	grunt.loadNpmTasks('grunt-jsduck');
@@ -281,11 +311,13 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-saucelabs');
 
 
-  	grunt.registerTask('default', ['closureCompiler', 'browserify', 'jasmine', 'jsduck', 'buildGitReadme', 'uglify', 'removeDebuggers']);
-  	grunt.registerTask('precommit', ['closureCompiler', 'jshint', 'jasmine', 'sauce']);
-  	grunt.registerTask('jenkins', ['browserify', 'jasmine', 'jsduck', 'buildGitReadme', 'uglify', 'removeDebuggers']);
-	//grunt.registerTask("sauce", ["connect", "watch"]);
+	grunt.registerTask('validate', ['closureCompiler', 'jshint', 'coverage']);
+	grunt.registerTask('coverage', ['browserify:coverage', 'jasmine:coverage']);
+	grunt.registerTask('test', ['browserify:modscore', 'jasmine:modscore']);
 
+  	grunt.registerTask('default', ['closureCompiler', 'test', 'jsduck', 'buildGitReadme', 'uglify', 'removeDebuggers']);
+  	grunt.registerTask('precommit', ['closureCompiler', 'test', 'coverage', 'uglify', 'sauce','jshint']);
+  	grunt.registerTask('jenkins', ['test', 'jsduck', 'buildGitReadme', 'uglify', 'removeDebuggers']);
 	grunt.registerTask('sauce', ['connect', 'saucelabs-jasmine']);
 
 };

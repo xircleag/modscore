@@ -25,6 +25,7 @@
     "grunt-jsduck": "^1.0.1",
     "grunt-notify": "^0.3.1",
     "grunt-saucelabs": "^8.3.2",
+    "grunt-template-jasmine-istanbul": "^0.3.0",
     "request": "^2.44.0"
   }
 }

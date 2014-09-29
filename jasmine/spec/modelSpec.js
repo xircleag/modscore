@@ -1,3 +1,4 @@
+var start = Date.now();
 describe("Model", function() {
     var genericPersonDef;
 
@@ -508,7 +509,56 @@ describe("Model", function() {
         });
     });
 
+    describe("Test statics", function() {
 
+        it("Should define static properties", function() {
+            Person = m_.Model.extend({
+                name: "Person",
+                properties: genericPersonDef,
+                statics: {
+                    a: 5,
+                    b: "Fred"
+                }
+            });
+            expect(Person.a).toEqual(5);
+            expect(Person.b).toEqual("Fred");
+            Person.a++;
+            expect(Person.a).toEqual(6);
+        });
+
+        it("Should define static methods", function() {
+            Person = m_.Model.extend({
+                name: "Person",
+                properties: genericPersonDef,
+                statics: {
+                    a: 5,
+                    b: "Fred",
+                    incA: function() {this.a++;}
+                }
+            });
+            expect(Person.a).toEqual(5);
+            expect(Person.b).toEqual("Fred");
+            Person.incA();
+            expect(Person.a).toEqual(6);
+        });
+
+        it("Should run static init method", function() {
+            Person = m_.Model.extend({
+                name: "Person",
+                properties: genericPersonDef,
+                statics: {
+                    a: 5,
+                    b: "Fred",
+                    incA: function() {this.a++;},
+                    init: function() {this.incA();}
+                }
+            });
+            expect(Person.a).toEqual(6);
+            expect(Person.b).toEqual("Fred");
+            Person.incA();
+            expect(Person.a).toEqual(7);
+        });
+    });
 
     describe("Test Events", function() {
         it("Basic events should work", function() {
@@ -733,40 +783,20 @@ describe("Model", function() {
         });
     });
 
-    // ARGH: No Node support Means No Integration Server Testing!
-    // TODO: CROSS BROWSER TESTING!!!!
-    // TODO: Verify it can detect isPrivateOk for every call to $super
+    describe("Test misc Model Methods", function() {
 
-/*
-    describe("Should be able to lock all private properties", function() {
-        var locker, lockerGetter;
-        it("Should be able to manage access to private properties", function() {
-            var Person = m_.Model.extend("Person", genericPersonDef);
-            var p = new Person();
-            expect(p.__privates.middleName).toEqual("Homer");
-
-            p.__privates.middleName = "Fred";
-            expect(p.__privates.middleName).toEqual("Fred");
-
-            lockerGetter = m_.getPrivateModelLocker;
-            locker = m_.getPrivateModelLocker();
-            locker(true);
-
-            p.__privates.middleName = "John";
-            expect(p.__privates.middleName).toEqual(undefined);
-
-            locker(false);
-            expect(p.__privates.middleName).toEqual("Fred");
-            p.__privates.middleName = "John";
-            expect(p.__privates.middleName).toEqual("John");
+        it("Should output suitable JSON", function() {
+            var Person = m_.Model.extend({name:"Person", properties:genericPersonDef});
+            var p = new Person({
+                firstName: "Fred"
+            });
+            expect(JSON.parse(p.toJson())).toEqual({
+                firstName: "Fred",
+                z: "FRED!",
+                age: 13
+            });
         });
 
-        it("Should not allow multiple calls to getPrivateModelLocker", function() {
-            expect(m_.getPrivateModelLocker).toBe(undefined);
-            m_.getPrivateModelLocker = lockerGetter;
-            expect(lockerGetter).not.toBe(undefined);
-            expect(m_.getPrivateModelLocker).toBe(undefined);
-        });
     });
-*/
+
 });

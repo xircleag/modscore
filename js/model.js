@@ -589,7 +589,7 @@
     m_.extend(Model.prototype, Events);
     Model.prototype._events = {};
 
-
+    /* istanbul ignore next: private methods can't be tested on phantomjs */
     function isPrivateAllowed(caller) {
         if (this.__values.__notinitialized) return true;
 
@@ -626,6 +626,7 @@
 
 
     function genericGetter(def, caller, name) {
+        /* istanbul ignore if: Privates not tested */
         if (def.private) {
             if (!isPrivateAllowed.call(this, caller)) {
                 console.warn(name + ": Private property accessed from context that is not a method of the object");
@@ -636,7 +637,7 @@
     }
 
     function genericSetter(def, caller, name, inValue) {
-
+        /* istanbul ignore if: Privates not tested */
         if (def.private || def.privateSetter) {
             if (!isPrivateAllowed.call(this, caller)) {
                 console.warn(name + ": Private property accessed from context that is not a method of the object");
@@ -745,14 +746,16 @@
             enumerable: !def.private,
             configurable: def.type == "any",
             get: function get() {
-                return genericGetter.call(this, def, arguments.callee.caller, name);
+// build two versions, let a company pick which one they want?
+                return genericGetter.call(this, def, get.caller, name);
             },
             set: function set(inValue) {
-                return genericSetter.call(this, def, arguments.callee.caller, name, inValue);
+                return genericSetter.call(this, def, set.caller, name, inValue);
             }
         });
     }
 
+    /* istanbul ignore next: Privates not tested; functionGetter only for private methods */
     function functionGetter(model, def, caller, name) {
         if (def.private) {
             if (!isPrivateAllowed.call(this, caller) && !m_.isFunction(model[name])) {
@@ -763,13 +766,13 @@
         return model.prototype.__functions[name];
     }
 
-
+    /* istanbul ignore next: defineFunc for private methods only; not tested in phantomjs */
     function defineFunc(model, name, def, func) {
         Object.defineProperty(model.prototype, name, {
             enumerable: false,
             configurable: true,
             get: function get() {
-                return functionGetter.call(this, model, def, arguments.callee.caller, name);
+                return functionGetter.call(this, model, def, get.caller, name);
             }
         });
         model.prototype.__functions[name] = func;
@@ -884,10 +887,13 @@
      * Person.prototype.breath = function(howMuch, airQuality) {
      *     this.$super(howMuch, "truely awful");
      * }
+     *
+     * DANGER: Use of arguments.callee disables code optimizers of most browsers.
+     * We could replace calls to this.$super(...) with Person.prototype.myfunc.$super.call(this, ...)
      */
     Model.prototype.$super = function() {
-        var caller = arguments.callee.caller;
-        var f = caller.$super;
+        var caller = this.$super.caller;
+        var f = caller.$super; // get the $super value we attached when defining the function
         var args;
         if (f) {
             args = arguments.length ? arguments : caller.arguments;
@@ -901,8 +907,9 @@
      */
      Model.prototype.toJson = function() {
         var obj = {};
+
         m_.each(this.__class.$meta.properties, function(def, name) {
-            if (!def.private) {
+            if (!def.private && !(name in Model.prototype)) {
                 obj[name] = this[name];
             }
         }, this);
@@ -1081,7 +1088,7 @@
 
     m_.each(Model.$meta.properties, function(inValue, inKey) {
         defineProperty(Model, inKey, inValue);
-        if ("defaultValue" in inValue) Model.$meta.defaults[inKey] = inValue.defaultValue;
+        //if ("defaultValue" in inValue) Model.$meta.defaults[inKey] = inValue.defaultValue;
     }, this);
 
     module.exports = Model;
