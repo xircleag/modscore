@@ -567,5 +567,20 @@
     return returnFunc;
   };
 
+  // Todo: Use a single predefined regex?
+  _.substitute = function(tmpl, data) {
+    return String(tmpl).replace(/\{\{.*?\}\}/g, function(key) {
+        key = key.substring(2,key.length-2);
+        var parts = key.split("."), d = data;
+        while (parts.length) {
+            var part = parts.shift();
+            if (d && typeof d == "object") d = d[part];
+        }
+        if (d === null || d === undefined) d = "";
+        return d;
+  });
+}
+
+
   module.exports = _; // Used when importing this via browserify/npm
 
