@@ -687,6 +687,30 @@ describe("Model", function() {
         });
 
 
+        it("once should cancel ALL events in the group", function() {
+            var Person = m_.Model.extend({name:"Person", properties:genericPersonDef});
+            var p = new Person();
+            var count = 0;
+
+            p.once({
+                a: function() {
+                    count++;
+                },
+                b: function() {
+                    count++;
+                },
+                c: function() {
+                    count++;
+                }
+            });
+            p.trigger("a");
+            p.trigger("b");
+            p.trigger("c");
+
+            expect(count).toEqual(1);
+        });
+
+
         it("Should allow events to trigger when properties change", function() {
             var Person = m_.Model.extend({name:"Person", properties:genericPersonDef});
             var p = new Person({firstName: "Fred"});

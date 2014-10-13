@@ -53,32 +53,38 @@
     // obj.on("evtName", func, [context])
     // obj.on({"evtName1": func1, "evtName2": func2, "evtName3": func3}, [context]);
     on: function(name, callback, context) {
-      if (m_.isObject(name)) {
-        var eventSpec = name;
-        context = callback;
-        m_.each(eventSpec, function(evtDef, name) {
-            this.on(name, evtDef, context);
-        }, this);
-      } else {
-        if (!eventsApi(this, "on", name, [callback, context]) || !callback) return this;
-        if (!this._events) this.clearEvents();
-        var events = this._events[name] || (this._events[name] = []);
-        events.push({callback: callback, context: context, ctx: context || this});
-      }
+
+      if (!eventsApi(this, "on", name, [callback, context]) || !callback) return this;
+      if (!this._events) this.clearEvents();
+      var events = this._events[name] || (this._events[name] = []);
+      events.push({callback: callback, context: context, ctx: context || this});
       return this;
     },
 
     // Bind an event to only be triggered a single time. After the first time
     // the callback is invoked, it will be removed.
     once: function(name, callback, context) {
-      if (!eventsApi(this, "once", name, [callback, context]) || !callback) return this;
+      //if (!eventsApi(this, "once", name, [callback, context]) || !callback) return this;
       var self = this;
-      var once = m_.once(function() {
-        self.off(name, once);
-        callback.apply(this, arguments);
+      var onces = [];
+      var obj = {};
+      if (typeof name == "string") {
+        obj[name] = callback;
+      } else {
+        obj = name;
+      }
+      m_.each(obj, function(callback, name) {
+        var once = m_.once(function() {
+          onces.forEach(function(aOnce) {
+            self.off("", aOnce);
+          });
+          callback.apply(this, arguments);
+        });
+        onces.push(once);
+        once._callback = callback;
+        self.on(name, once, context);
       });
-      once._callback = callback;
-      return this.on(name, once, context);
+      return this;
     },
 
     // Remove one or many callbacks. If `context` is null, removes all
