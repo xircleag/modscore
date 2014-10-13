@@ -581,6 +581,7 @@
             this.init.apply(this, arguments);
             delete this.__values.__notinitialized;
             Object.seal(this);
+            this.trigger("new", this);
         }
 
     };

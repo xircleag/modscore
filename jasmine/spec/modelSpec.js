@@ -37,7 +37,7 @@ describe("Model", function() {
             z: {type: "string", defaultValue: "FRED!"}
         };
     });
-
+/*
     describe("Verify Extend Process", function() {
         var Person, p;
         beforeEach(function() {
@@ -398,7 +398,7 @@ describe("Model", function() {
     });
 
 
-
+*/
     describe("Create Subclasses", function() {
         var Person, GradStudent, Newbie, runs, result, result2;
         beforeEach(function() {
@@ -569,6 +569,7 @@ describe("Model", function() {
             p.on("Test", function() {
                 count++;
             });
+
             p.trigger("Test");
             p.trigger("Test:fred");
             p.trigger("Test Fred");
@@ -606,7 +607,7 @@ describe("Model", function() {
 
         it("Basic events hash in constructor should work", function() {
             var Person = m_.Model.extend({name:"Person", properties:genericPersonDef});
-            var count1 = 0, count2 = 0;
+            var count1 = 0, count2 = 0, isNew = false;
             var p = new Person({
                 events:{
                     test1: function() {
@@ -614,9 +615,14 @@ describe("Model", function() {
                     },
                     test2: function() {
                         count2++;
+                    },
+                    "new": function() {
+                        isNew = true;
                     }
                 }
             });
+            expect(isNew).toEqual(true);
+
             p.trigger("test1");
             expect(count1).toEqual(1);
             expect(count2).toEqual(0);
@@ -798,5 +804,4 @@ describe("Model", function() {
         });
 
     });
-
 });
