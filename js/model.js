@@ -909,7 +909,7 @@
         var obj = {};
 
         m_.each(this.__class.$meta.properties, function(def, name) {
-            if (!def.private && !(name in Model.prototype)) {
+            if (!def.private && !(name in Model.prototype) && name != "_events") {
                 obj[name] = this[name];
             }
         }, this);
@@ -1023,7 +1023,7 @@
 
         m_.each(methods, function(funcDef, funcName) {
             var func = m_.isFunction(funcDef) ? funcDef : funcDef.method;
-            if (!fullFunc[funcName]) fullFunc[funcName] = [];
+            if (!m_.isArray(fullFunc[funcName])) fullFunc[funcName] = [];
             fullFunc[funcName].push(func.toString());
         }, this);
 
