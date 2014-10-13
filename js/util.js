@@ -67,10 +67,10 @@
    * @method each
    * @param {Object} obj - Object whose properties are to be iterated, OR an array to iterate over
    * @param {Function} callback - Method to call on each iteration
-   * @param {Any} callback.value - Value stored in an array or Object
+   * @param {Mixed} callback.value - Value stored in an array or Object
    * @param {String | Number} callback.index - For Object, index is the key associated with the value. For arrays index is the index in the array.
    * @param {Object} callback.obj - Object/Array we are iterating over
-   * @param {Any} [context] - Context for the callback's this pointer
+   * @param {Mixed} [context] - Context for the callback's this pointer
    */
   _.each = function(obj, callback, context) {
     if (obj === null || typeof obj != "object") return obj;
@@ -97,11 +97,11 @@
       > 8
    *
    * @method find
-   * @param {[Any]} inArray - Array to search
+   * @param {Mixed[]} inArray - Array to search
    * @param {Function} callback - Function; returns true to signal that its found a result to return
-   * @param {Any} callback.value - Value from the array
+   * @param {Mixed} callback.value - Value from the array
    * @param {Number} callback.index - Index in the array
-   * @param {[Any]} callback.inArray - Array that we are iterating over
+   * @param {Mixed[]} callback.inArray - Array that we are iterating over
    * @param {Object} [context] - The this pointer to use within the callback
    */
   _.find = function(inArray, callback, context) {
@@ -127,11 +127,11 @@
       });
    *
    * @method sortBy
-   * @param {[Any]} inArray - Array to sort
+   * @param {Mixed[]} inArray - Array to sort
    * @param {Function} callback - Function; returns the value to use in the sort
-   * @param {Any} callback.value - Value from the array
+   * @param {Mixed} callback.value - Value from the array
    * @param {Number} callback.index - Index in the array
-   * @param {[Any]} callback.inArray - Array that we are iterating over
+   * @param {Mixed[]} callback.inArray - Array that we are iterating over
    * @param {Object} [context] - The this pointer to use within the callback
    */
   _.sortBy = function(inArray, callback, context) {
@@ -172,7 +172,7 @@
       m_.filterWhere(objects, {a: {b: 5}});
       > [{a: {b: 5, c: 10}}]
   * @method filterWhere
-  * @param {[Any]} inArray - Array to filter
+  * @param {Mixed[]} inArray - Array to filter
   * @param {Object} attrs - Attributes to match
   *
   * @note Recursive filter is not supported in the original underscorejs
@@ -194,7 +194,7 @@
       m_.findWhere(objects, {a: {b: 5}});
       > {a: {b: 5, c: 10}}
   * @method filterWhere
-  * @param {[Any]} inArray - Array to search
+  * @param {Mixed[]} inArray - Array to search
   * @param {Object} attrs - Attributes to match
   *
   * @note Recursive find is not supported in the original underscorejs
@@ -239,7 +239,7 @@
    * @method defer
    * @param {Function} func - The function to call after a delay
    * @param {Object} [context] - The this pointer; required if you are passing in function args
-   * @param {...any} args - Any arguments that you want passed into func when its called
+   * @param {...Mixed} [args] - Any arguments that you want passed into func when its called
    */
   _.__deferState = {
     pid: null,
@@ -477,7 +477,7 @@
   /**
    * Returns true if the specied object, array or string is empty
    * @method isEmpty
-   * @param {Any} obj
+   * @param {Mixed} obj
    * @returns {Boolean} - True if its an object with no properties. True if its an empty array. True if its a string of length 0
    */
   _.isEmpty = function(obj) {
@@ -490,7 +490,7 @@
   /**
    * Is the parameter a Function Arguments object?
    * @method isArguments
-   * @param {Any} - Any value
+   * @param {Mixed} - Any value
    * @returns {Boolean} - Is the value an Arguments object
    */
   _.isArguments = function(obj) {
@@ -504,7 +504,7 @@
   /**
    * Is the parameter a DOM element?
    * @method isElement
-   * @param {Any} - Any value
+   * @param {Mixed} - Any value
    * @returns {Boolean} - Is the value a DOM element
    */
   _.isElement = function(obj) {
@@ -514,7 +514,7 @@
   /**
    * Is the parameter an array?
    * @method isArray
-   * @param {Any} - Any value
+   * @param {Mixed} - Any value
    * @returns {Boolean} - Is the value an array
    */
   _.isArray = Array.isArray || function(obj) {
@@ -526,7 +526,7 @@
    * typeof null === object, which is entirely useless for people who
    * are testing to see if something is an object.
    * @method isObject
-   * @param {Any} - Any value
+   * @param {Mixed} - Any value
    * @returns {Boolean} - Is the value an object
    */
   _.isObject = function(obj) {
@@ -537,7 +537,7 @@
   /**
    * Is the parameter a function?
    * @method isFunction
-   * @param {Any} - Any value
+   * @param {Mixed} - Any value
    * @returns {Boolean} - Is the value a function
    */
   _.isFunction = function(obj) {
