@@ -175,10 +175,10 @@
     while (++i < l) {
       try {
         switch (args.length) {
-          case 0: (ev = events[i]).callback.call(ev.ctx); return;
-          case 1: (ev = events[i]).callback.call(ev.ctx, a1); return;
-          case 2: (ev = events[i]).callback.call(ev.ctx, a1, a2); return;
-          case 3: (ev = events[i]).callback.call(ev.ctx, a1, a2, a3); return;
+          case 0: (ev = events[i]).callback.call(ev.ctx); break;
+          case 1: (ev = events[i]).callback.call(ev.ctx, a1); break;
+          case 2: (ev = events[i]).callback.call(ev.ctx, a1, a2); break;
+          case 3: (ev = events[i]).callback.call(ev.ctx, a1, a2, a3); break;
           default: (ev = events[i]).callback.apply(ev.ctx, args);
         }
       } catch(e) {
