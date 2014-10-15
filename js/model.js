@@ -878,12 +878,12 @@
     /**
      * Call the parent class method.  If there is no parent class method, does nothing.
      * @method $super
-     * @example
-     * // Automatically passes howMuch and airQuality to the parent method
-     * Person.prototype.breath = function(howMuch, airQuality) {
-     *     this.$super();
-     * }
-     *
+
+      // Automatically passes howMuch and airQuality to the parent method
+      Person.prototype.breath = function(howMuch, airQuality) {
+          this.$super();
+      }
+
      * // Passes only the values specifed to the parent method
      * Person.prototype.breath = function(howMuch, airQuality) {
      *     this.$super(howMuch, "truely awful");
