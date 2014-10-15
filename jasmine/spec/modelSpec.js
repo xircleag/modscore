@@ -37,7 +37,7 @@ describe("Model", function() {
             z: {type: "string", defaultValue: "FRED!"}
         };
     });
-/*
+
     describe("Verify Extend Process", function() {
         var Person, p;
         beforeEach(function() {
@@ -395,10 +395,16 @@ describe("Model", function() {
             Person = m_.Model.extend({name:"Person", properties:genericPersonDef});
             p = new Person({value: false});
         });
+
+        it("Should accept null/undefined for non-required fields", function() {
+            expect(function() {
+                var p = new Person({firstName: null});
+            }).not.toThrow();
+        });
     });
 
 
-*/
+
     describe("Create Subclasses", function() {
         var Person, GradStudent, Newbie, runs, result, result2;
         beforeEach(function() {
@@ -784,6 +790,7 @@ describe("Model", function() {
             p.destroy();
             expect(eventTriggeredOn).toEqual(p);
         });
+
     });
 
 

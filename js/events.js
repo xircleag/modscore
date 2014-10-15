@@ -131,8 +131,8 @@
       if (!eventsApi(this, "trigger", name, args)) return this;
       var events = this._events[name];
       var allEvents = this._events.all;
-      if (events) triggerEvents(events, args);
-      if (allEvents) triggerEvents(allEvents, arguments);
+      if (events) triggerEvents(events, args, name);
+      if (allEvents) triggerEvents(allEvents, arguments, name);
       return this;
     }
   };
@@ -170,14 +170,20 @@
   // A difficult-to-believe, but optimized internal dispatch function for
   // triggering events. Tries to keep the usual cases speedy (most internal
   // Backbone events have 3 arguments).
-  var triggerEvents = function(events, args) {
+  var triggerEvents = function(events, args, name) {
     var ev, i = -1, l = events.length, a1 = args[0], a2 = args[1], a3 = args[2];
-    switch (args.length) {
-      case 0: while (++i < l) (ev = events[i]).callback.call(ev.ctx); return;
-      case 1: while (++i < l) (ev = events[i]).callback.call(ev.ctx, a1); return;
-      case 2: while (++i < l) (ev = events[i]).callback.call(ev.ctx, a1, a2); return;
-      case 3: while (++i < l) (ev = events[i]).callback.call(ev.ctx, a1, a2, a3); return;
-      default: while (++i < l) (ev = events[i]).callback.apply(ev.ctx, args);
+    while (++i < l) {
+      try {
+        switch (args.length) {
+          case 0: (ev = events[i]).callback.call(ev.ctx); return;
+          case 1: (ev = events[i]).callback.call(ev.ctx, a1); return;
+          case 2: (ev = events[i]).callback.call(ev.ctx, a1, a2); return;
+          case 3: (ev = events[i]).callback.call(ev.ctx, a1, a2, a3); return;
+          default: (ev = events[i]).callback.apply(ev.ctx, args);
+        }
+      } catch(e) {
+        console.error("Error handling Event " + name + ": " + e);
+      }
     }
   };
 

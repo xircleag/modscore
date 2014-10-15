@@ -679,41 +679,47 @@
         /* Step 4: Support required fields */
         if (def.required && (inValue === null || inValue === "")) throw new Error(name + ": is required");
 
-        /* Step 5: Throw errors on receiving invalid values */
-        var validator = getValidator(def.type), validatorResult;
-        if (validator) {
-            if (def.type.charAt(0) == "[") {
-                if (inValue !== null) {
-                    if (!m_.isArray(inValue)) {
-                        throw new Error(name + ": must be an array");
+        /* Step 5: Throw errors on receiving invalid values. Note: null/undefined are
+         * only invalid if the field is required.
+         */
+        if (inValue !== null) {
+            var validator = getValidator(def.type), validatorResult;
+            if (validator) {
+                if (def.type.charAt(0) == "[") {
+                    if (inValue !== null) {
+                        if (!m_.isArray(inValue)) {
+                            throw new Error(name + ": must be an array");
+                        }
+                        var invalidValue = m_.find(inValue, validator);
+                        if (invalidValue !== undefined) {
+                            throw new Error(name + ": " + validator(invalidValue));
+                        }
                     }
-                    var invalidValue = m_.find(inValue, validator);
-                    if (invalidValue !== undefined) {
-                        throw new Error(name + ": " + validator(invalidValue));
-                    }
+                } else {
+                    validatorResult = validator(inValue);
                 }
-            } else {
-                validatorResult = validator(inValue);
-            }
-            if (validatorResult) throw new Error(name + ": " + validatorResult);
-        } else if (inValue !== null && def.type != "any" && def.type != "[any]") {
-            validator = function(inValue, type) {
-                if (classRegistry[type]) {
-                    if (!(inValue instanceof classRegistry[type])) {
+                if (validatorResult) throw new Error(name + ": " + validatorResult);
+            } else if (inValue !== null && def.type != "any" && def.type != "[any]") {
+                validator = function(inValue, type) {
+                    if (classRegistry[type]) {
+                        if (!(inValue instanceof classRegistry[type])) {
+                            throw name + ": must be of type " + type;
+                        }
+                    } else if (({}).toString.call(inValue) != "[object " +  type + "]") {
                         throw name + ": must be of type " + type;
                     }
-                } else if (({}).toString.call(inValue) != "[object " +  type + "]") {
-                    throw name + ": must be of type " + type;
+                };
+                if (def.type.charAt(0) == "[") {
+                    var type = def.type.substring(1,def.type.length-1);
+                    m_.each(inValue, function(v) {
+                        validator.call(this, v, type);
+                    }, this);
+                } else {
+                    validator.call(this, inValue, def.type);
                 }
-            };
-            if (def.type.charAt(0) == "[") {
-                var type = def.type.substring(1,def.type.length-1);
-                m_.each(inValue, function(v) {
-                    validator.call(this, v, type);
-                }, this);
-            } else {
-                validator.call(this, inValue, def.type);
             }
+        } else if (def.type == "string") {
+            inValue = "";
         }
 
         /* Step 6: Run custom validator */
