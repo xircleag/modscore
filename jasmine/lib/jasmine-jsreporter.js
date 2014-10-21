@@ -262,6 +262,11 @@
       parent.passed = parent.passed && suite.passed;
     }
 
+    if (parent && suite.passed) {
+        var suiteId = parent.suites.indexOf(suite);
+        parent.suites.splice(suiteId,1);
+    }
+
     // keep report representation clean
     delete suite.timer;
     delete suite.id;
@@ -307,8 +312,16 @@
 
     // maintain parent suite state
     var parent = this.suites[spec.suiteId];
-    if (spec.failed) {
+    if (!spec.passed) {
+      if (!parent.failingSpecs) parent.failingSpecs = [];
+      spec.failures.forEach(function(failure) {
+        delete failure.trace;
+      });
       parent.failingSpecs.push(spec);
+    } else {
+      // remove suites that passed from the report
+      var specId = parent.specs.indexOf(spec);
+      parent.specs.splice(specId, 1);
     }
     parent.passed = parent.passed && spec.passed;
 

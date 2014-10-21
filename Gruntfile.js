@@ -38,6 +38,28 @@ module.exports = function(grunt) {
 	    });
 	});
 
+
+	function parseSauceJasmineResults(results) {
+		if (!results) return ["Test results too long; test may have passed"];
+		if (results.passed) return false;
+		var response = [];
+		if (results.suites) {
+			results.suites.forEach(function(suite) {
+				var tmp = parseSauceJasmineResults(suite);
+				if (tmp) response = response.concat(tmp);
+			});
+		}
+		if (results.failingSpecs) {
+			results.failingSpecs.forEach(function(spec) {
+				spec.failures.forEach(function(failure) {
+					response.push(failure.message);
+				});
+			});
+		}
+		return response;
+	}
+
+
 	var credentials;
 	try {
 		credentials = grunt.file.readJSON('credentials.json');
@@ -219,7 +241,11 @@ module.exports = function(grunt) {
 			    options: {
 			      username: credentials.saucelabs.user,
 			      key: credentials.saucelabs.pass,
-			      urls: ['http://127.0.0.1:9023/jasmine/SpecRunner.html'],
+
+			      /* WARNING: saucelabs only handles small test scripts, so longer test scripts
+			       * must be broken into separate URLs
+			       */
+			      urls: ['http://127.0.0.1:9023/jasmine/ModelRunner.html','http://127.0.0.1:9023/jasmine/PrivateRunner.html','http://127.0.0.1:9023/jasmine/SpecRunner.html'],
 			      //build: process.env.CI_BUILD_NUMBER,
 			      testname: 'Sauce Unit Test for modscore',
 			      browsers: [
@@ -230,9 +256,9 @@ module.exports = function(grunt) {
 					},
 					{
 				        browserName: 'firefox',
-				        version: '19',
-				        platform: 'XP'
-			        }/*,
+				        version: '32',
+				        platform: 'OS X 10.9'
+			        },
 			        {
 			        	browserName: 'iphone',
 			        	version: '7.1',
@@ -248,7 +274,7 @@ module.exports = function(grunt) {
 			        	version: '7',
 						platform: 'OS X 10.9'
 
-					}*/
+					}
 			      ],
 
 					/* Result looks like:
@@ -264,25 +290,30 @@ module.exports = function(grunt) {
 				*/
 
 			      onTestComplete: function(result, callback) {
-			      	console.dir(result);
 			      	  var user = "mkantor_layer_com";
         			  var pass = "7fe4f738-4780-41f4-b8e3-58a034eed2c5";
 			      	  require("request").put({
 				            url: ['https://saucelabs.com/rest/v1', user, 'jobs', result.job_id].join('/'),
 				            auth: { user: user, pass: pass },
-				            json: { passed: Boolean(result.passed) }
+				            json: {
+				            	passed: Boolean(result.passed),
+				            	name: "Modscore: Unit Test " + result.testPageUrl.replace(/^.*\//,"")
+				            }
 				      }, function (error, response, body) {
 				      	if (response.statusCode != 200) {
 				      		console.error("Error updating sauce results: " + body.error);
 				      	}
 				      });
 
-			      	  console.log("Test Complete: " + Boolean(result.passed) + " for " + result.platform.join(" "));
 			      	  if (result.passed) {
-			      	  	console.log("Passed Tests: " + result.platform.join(" "));
 			      	  	callback();
 			      	  } else {
-			      	  	callback(new Error(result.platform.join(" ") + " failed tests; results at " + result.url));
+			      	  	console.log("SAUCE RESPONSES:");
+			      	  	console.dir(result.result);
+			      	  	var errors = parseSauceJasmineResults(result.result);
+			      	  	console.log("ERRORS:");
+			      	  	console.error("    " + errors.join("\n    "));
+			      	  	callback(new Error(result.platform.join(" ") + " failed tests; results at " + result.url + "; Errors Reported: \n    " + result.testPageUrl + "\n    " + errors.join("\n    ")));
 			      	  }
 
 			      }
@@ -291,11 +322,10 @@ module.exports = function(grunt) {
 		},
 		watch: {
 			modscore: {
-			  	files: ['js/*.js', '<%= jasmine.modscore.options.specs %>', "Gruntfile.js"],
-			   	tasks: ['closureCompiler', 'test', 'jsduck', 'buildGitReadme'] /* Concat lets us test in our local dev env and won't get done if we run/fail tests first. */
+			  	files: ['js/*.js', '<%= jasmine.options.specs %>', "Gruntfile.js"],
+			   	tasks: ['closureCompiler', 'test', 'jsduck', 'buildGitReadme', 'uglify'] /* Concat lets us test in our local dev env and won't get done if we run/fail tests first. */
 			}
-		}
-	});
+		}	});
 
 	grunt.loadNpmTasks('grunt-contrib-jasmine');
 
@@ -315,9 +345,8 @@ module.exports = function(grunt) {
 	grunt.registerTask('coverage', ['browserify:coverage', 'jasmine:coverage']);
 	grunt.registerTask('test', ['browserify:modscore', 'jasmine:modscore']);
 
-  	grunt.registerTask('default', ['closureCompiler', 'test', 'jsduck', 'buildGitReadme', 'uglify', 'removeDebuggers']);
-  	grunt.registerTask('precommit', ['closureCompiler', 'test', 'coverage', 'uglify', 'sauce','jshint']);
-  	grunt.registerTask('jenkins', ['test', 'jsduck', 'buildGitReadme', 'uglify', 'removeDebuggers']);
+  	grunt.registerTask('default', ['closureCompiler', 'test', 'jsduck', 'buildGitReadme', 'uglify']);
+  	grunt.registerTask('precommit', ['closureCompiler', 'removeDebuggers', 'test', 'coverage', 'uglify', 'sauce','jshint']);
+  	grunt.registerTask('jenkins', ['test', 'removeDebuggers', 'jsduck', 'buildGitReadme', 'uglify', 'sauce']);
 	grunt.registerTask('sauce', ['connect', 'saucelabs-jasmine']);
-
 };
