@@ -347,6 +347,6 @@ module.exports = function(grunt) {
 
   	grunt.registerTask('default', ['closureCompiler', 'test', 'jsduck', 'buildGitReadme', 'uglify']);
   	grunt.registerTask('precommit', ['closureCompiler', 'removeDebuggers', 'test', 'coverage', 'uglify', 'sauce','jshint']);
-  	grunt.registerTask('jenkins', ['test', 'removeDebuggers', 'jsduck', 'buildGitReadme', 'uglify', 'sauce']);
+  	grunt.registerTask('jenkins', ['test', 'removeDebuggers', 'jsduck', 'buildGitReadme', 'uglify'/*, 'sauce'*/]);
 	grunt.registerTask('sauce', ['connect', 'saucelabs-jasmine']);
 };
