@@ -517,6 +517,26 @@
             }
         });
 
+    * ## Dependency Injection
+    * While this does not support a true dependency injection system, it does allow every class to define a role,
+    * and any number of classes can implement that role:
+
+        var Person = m_.extend({
+            name: "Person",
+            role: "Developer"
+        });
+
+        var Robot = m_.extend({
+            name: "Robot",
+            role: "Developer"
+        });
+
+        var Developer = m_.Model.getClass("Developer");
+        new Developer();
+
+    * The above code will create a new Person or Robot, depending on which has been defined.
+    * If both are defined, only the first one will be used.
+    *
     * END-GIT-README
     */
 
@@ -540,6 +560,7 @@
         this.value = inValue;
     };
     var classRegistry = {};
+    var roleRegistry = {};
 
     var Model = function(params) {
         if (!modelInit) {
@@ -999,7 +1020,7 @@
         cons.prototype.__functions = {};
 
         if (args.name) classRegistry[className] = cons;
-
+        if (args.role && !roleRegistry[args.role]) roleRegistry[args.role] = cons;
         m_.each(methods || {}, function(funcDef, name) {
             var func, funcDefInternal = {};
             if (m_.isFunction(funcDef)) {
@@ -1070,6 +1091,10 @@
 
         modelInit = false;
         return cons;
+    };
+
+    Model.getClass = function(name) {
+        return roleRegistry[name] || classRegistry[name];
     };
 
     Model.$meta = {

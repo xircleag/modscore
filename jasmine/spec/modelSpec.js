@@ -403,6 +403,20 @@ describe("Model", function() {
         });
     });
 
+    describe("Use roles and getClass", function() {
+        it("Should get by role", function(){
+             var Person = m_.Model.extend({
+                name:"a.Person",
+                role: "a.Caveman",
+                properties:genericPersonDef
+            });
+            expect(m_.Model.getClass("a.Caveman")).toBe(Person);
+            expect(m_.Model.getClass("a.Person")).toBe(Person);
+
+        });
+
+    });
+
 
 
     describe("Create Subclasses", function() {
