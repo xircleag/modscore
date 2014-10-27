@@ -578,7 +578,10 @@
             var defs = this.__class.$meta.properties;
             this.__values.__processConstructorParams = true;
             m_.each(defs, function(def, name) {
-                if (name in params) {
+                var type = Model.getClass(def.type);
+                if (type && type.prototype instanceof Model.getClass("Collection")) {
+                    this[name] = new type();
+                } else if (name in params) {
                     this[name] = params[name];
                 } else if (def.type.indexOf("[") === 0) {
                     this[name] = [];

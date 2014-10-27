@@ -109,7 +109,9 @@ Collection.extend({
             this.data.sort(fn);
         },
         destroy: function() {
-            this.each(function(item) {
+            // destroy may side effect modifying this.data, so iterate over a copy
+            var d = this.data.concat([]);
+            d.forEach(function(item) {
                 item.destroy();
             });
             this.$super();

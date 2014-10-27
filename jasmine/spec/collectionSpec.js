@@ -122,4 +122,22 @@ describe("Collections", function() {
         c.sortBy(function(item) {return item.firstName});
         expect(c.map(function(item) {return item.firstName})).toEqual(["Fred", "Wilma", undefined]);
     });
+
+    it("Should initialize a model field if that field is a collection", function() {
+        var Cat = m_.Model.extend({
+            name: "Cat",
+            properties: {
+                age: {
+                    type: "number"
+                },
+                legs: {
+                    type: "ArrayCollection"
+                }
+            }
+        });
+
+        var c = new Cat();
+        expect(c.legs instanceof m_.Model.getClass("ArrayCollection")).toEqual(true);
+
+    });
 });
