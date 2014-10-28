@@ -141,6 +141,26 @@ describe("Collections", function() {
 
     });
 
+    it("Should initialize a model field with values", function() {
+        var Cat = m_.Model.extend({
+            name: "Cat",
+            properties: {
+                age: {
+                    type: "number"
+                },
+                legs: {
+                    type: "ArrayCollection"
+                }
+            }
+        });
+
+        var cat = new Cat({
+            legs: [new Cat(), new Cat()]
+        });
+        expect(cat.legs.length).toEqual(2);
+
+    });
+
     it("Should forward item events", function() {
         var new1 = false, change1 = false, change2 = false;
         var Cat = m_.Model.extend({

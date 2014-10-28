@@ -582,6 +582,11 @@
                 if (type && type.prototype instanceof Model.getClass("Collection")) {
                     this[name] = new type(def.params);
                     this[name].on("all", this.collectionEvent.bind(this));
+                    if (name in params && m_.isArray(params[name])) {
+                        params[name].forEach(function(item) {
+                            this[name].add(item);
+                        }, this);
+                    }
                 } else if (name in params) {
                     this[name] = params[name];
                 } else if (def.type.indexOf("[") === 0) {
