@@ -184,6 +184,13 @@ describe("Collections", function() {
         expect(new1).toEqual(true);
         expect(change1).toEqual(true);
         expect(change2).toEqual(true);
+
+        change1 = change2 = false;
+
+        cat.littleCats.remove(kitten);
+        kitten.age = 65;
+        expect(change1).toEqual(false);
+        expect(change2).toEqual(false);
     });
 
     it("Should allow customizing events", function() {
@@ -198,7 +205,7 @@ describe("Collections", function() {
                     type: "ArrayCollection",
                     params: {
                         name: "kitten",
-                        evtModfier: function(args) {
+                        evtModifier: function(args) {
                             args[0] = args[0].replace(/^kitten:/, "");
                         }
                     }
@@ -216,7 +223,7 @@ describe("Collections", function() {
         });
         var kitten = new Cat();
         cat.littleCats.add(kitten);
-        debugger;
+
         kitten.age = 55;
         expect(change2).toBe(true);
     });

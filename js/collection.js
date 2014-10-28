@@ -93,7 +93,7 @@ Collection.extend({
             this.trigger(this.name + ":new", item);
             this.trigger("change");
             if (item instanceof Model) {
-                item.on("all", this.itemEvt.bind(this, item));
+                item.on("all", this.itemEvt.bind(this, item), this);
             }
         },
         remove: function(item) {
@@ -104,6 +104,7 @@ Collection.extend({
                 this.length = this.data.length;
                 this.trigger(this.name + ":remove", item);
                 this.trigger("change");
+                item.off("all", null, this);
             }
         },
         indexOf: function(item) {
