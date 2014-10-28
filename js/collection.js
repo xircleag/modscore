@@ -54,7 +54,8 @@ Collection.extend({
         itemEvt: {
             private: true,
             method: function(item, evtName) {
-                if (evtName == "destroy") return this.remove(item);
+                if (evtName == "destroy") return this.remove(item); // remove it and fire removal events instead
+                if (evtName == "new") return; // already fired
                 var args = Array.prototype.slice.call(arguments);
                 args[0] = this.name + ":" + evtName;
                 args[1] = item;
