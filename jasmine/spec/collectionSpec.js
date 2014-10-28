@@ -332,6 +332,9 @@ describe("Collections", function() {
         var Cat = m_.Model.extend({
             name: "Cat",
             properties: {
+                name: {
+                    type: "string"
+                },
                 age: {
                     type: "number"
                 },
@@ -347,10 +350,12 @@ describe("Collections", function() {
 
 
         var cat = new Cat({
-            kittens: [new Cat({age:35}),new Cat({age:25}),new Cat({age:45})]
+            kittens: [new Cat({age:35, name: "z"}),new Cat({age:25, name: "a"}),new Cat({age:45, name: "m"})]
         });
         expect(cat.kittens.map(function(item){return item.age;})).toEqual([25,35,45]);
-        cat.kittens.add(new Cat({age:3}));
+        cat.kittens.add(new Cat({age:3, name: "n"}));
         expect(cat.kittens.map(function(item){return item.age;})).toEqual([3,25,35,45]);
+        cat.kittens.sortByProp = "name";
+        expect(cat.kittens.map(function(item){return item.name;})).toEqual(["a","m","n","z"]);
     });
 });

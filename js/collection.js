@@ -207,6 +207,8 @@ Collection.extend({
             }, this);
             this.length = this.data.length;
             this.resort();
+
+            this.on("change:sortByProp", this.resort , this);
         },
 
         /**
