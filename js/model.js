@@ -580,7 +580,8 @@
             m_.each(defs, function(def, name) {
                 var type = Model.getClass(def.type);
                 if (type && type.prototype instanceof Model.getClass("Collection")) {
-                    this[name] = new type();
+                    this[name] = new type(def.params);
+                    this[name].on("all", this.collectionEvent.bind(this));
                 } else if (name in params) {
                     this[name] = params[name];
                 } else if (def.type.indexOf("[") === 0) {
@@ -903,6 +904,10 @@
         this.__isDestroyed = true;
         this.trigger("destroy");
         this.off();
+    };
+
+    Model.prototype.collectionEvent = function(name, item) {
+        this.trigger.apply(this, arguments);
     };
 
     /**

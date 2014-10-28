@@ -11,6 +11,14 @@ var Collection = Model.extend({
          * @property {number} length - Any implementation of the Collection class will have a length property
          */
 
+         /**
+          * @property {string} [name=item] - Name of the collection; name will be used when the collection
+          * generates events about its items.
+          */
+        name: {
+            type: "string",
+            defaultValue: "item"
+        }
     }
 });
 
@@ -33,7 +41,7 @@ Collection.extend({
             method: function(item, evtName) {
                 if (evtName == "destroy") return this.remove(item);
                 var args = Array.prototype.slice.call(arguments);
-                args[0] = "item:" + evtName;
+                args[0] = this.name + ":" + evtName;
                 args[1] = item;
                 this.trigger.apply(this, args);
             }
@@ -64,7 +72,7 @@ Collection.extend({
         add: function(item) {
             this.data.push(item);
             this.length = this.data.length;
-            this.trigger("item:new", item);
+            this.trigger(this.name + ":new", item);
             this.trigger("change");
             if (item instanceof Model) {
                 item.on("all", this.itemEvt.bind(this, item));
@@ -76,9 +84,12 @@ Collection.extend({
             if (index != -1) {
                 d.splice(index,1);
                 this.length = this.data.length;
-                this.trigger("item:remove", item);
+                this.trigger(this.name + ":remove", item);
                 this.trigger("change");
             }
+        },
+        indexOf: function(item) {
+            return this.data.indexOf(item);
         },
         find: function(fn) {
             var d = this.data,

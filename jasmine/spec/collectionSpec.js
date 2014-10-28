@@ -136,8 +136,53 @@ describe("Collections", function() {
             }
         });
 
-        var c = new Cat();
-        expect(c.legs instanceof m_.Model.getClass("ArrayCollection")).toEqual(true);
+        var cat = new Cat();
+        expect(cat.legs instanceof m_.Model.getClass("ArrayCollection")).toEqual(true);
 
+    });
+
+    it("Should forward item events", function() {
+        var new1 = false, change1 = false, change2 = false;
+        var Cat = m_.Model.extend({
+            name: "Cat",
+            properties: {
+                age: {
+                    type: "number"
+                },
+                littleCats: {
+                    type: "ArrayCollection",
+                    params: {
+                        name: "kitten"
+                    }
+                }
+            }
+        });
+
+
+
+        var cat = new Cat();
+        cat.on({
+            "kitten:new": function(item) {
+                new1 = true;
+                expect(item).toBe(kitten);
+            },
+            "kitten:change": function(item, fieldName, newValue, oldValue) {
+                change1 = true;
+                expect(item).toBe(kitten);
+                expect(fieldName).toEqual("age");
+                expect(newValue).toEqual(55);
+            },
+            "kitten:change:age": function(item, newValue, oldValue) {
+                change2 = true;
+                expect(item).toBe(kitten);
+                expect(newValue).toEqual(55);
+            }
+        });
+        var kitten = new Cat();
+        cat.littleCats.add(kitten);
+        kitten.age = 55;
+        expect(new1).toEqual(true);
+        expect(change1).toEqual(true);
+        expect(change2).toEqual(true);
     });
 });
