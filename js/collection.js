@@ -38,14 +38,14 @@ Collection.extend({
          * @param {Function}
          * Use this to change how event names are generated if you don't like the default event names
 
-            evtModfier: function(args) {
+            evtModifier: function(args) {
                 if (args[0].match(/^foo:bar:change/)) {
                     args[0] = args[0].replace(/^foo:/,"");
                 }
             }
 
          */
-        evtModfier:{
+        evtModifier:{
             type: "Function"
         }
     },
@@ -58,8 +58,8 @@ Collection.extend({
                 var args = Array.prototype.slice.call(arguments);
                 args[0] = this.name + ":" + evtName;
                 args[1] = item;
-                if (this.evtModfier) {
-                    this.evtModfier(args);
+                if (this.evtModifier) {
+                    this.evtModifier(args);
                 }
                 this.trigger.apply(this, args);
             }
