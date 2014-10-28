@@ -185,4 +185,39 @@ describe("Collections", function() {
         expect(change1).toEqual(true);
         expect(change2).toEqual(true);
     });
+
+    it("Should allow customizing events", function() {
+        var new1 = false, change1 = false, change2 = false;
+        var Cat = m_.Model.extend({
+            name: "Cat",
+            properties: {
+                age: {
+                    type: "number"
+                },
+                littleCats: {
+                    type: "ArrayCollection",
+                    params: {
+                        name: "kitten",
+                        evtModfier: function(args) {
+                            args[0] = args[0].replace(/^kitten:/, "");
+                        }
+                    }
+                }
+            }
+        });
+
+        var cat = new Cat();
+        cat.on({
+            "change:age": function(item, newValue, oldValue) {
+                change2 = true;
+                expect(item).toBe(kitten);
+                expect(newValue).toEqual(55);
+            }
+        });
+        var kitten = new Cat();
+        cat.littleCats.add(kitten);
+        debugger;
+        kitten.age = 55;
+        expect(change2).toBe(true);
+    });
 });
