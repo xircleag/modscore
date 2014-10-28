@@ -1,4 +1,5 @@
 var Model = require("./model.js");
+var m_ = require("./util.js");
 
 /**
  * @class overscore.Collection
@@ -137,6 +138,35 @@ Collection.extend({
          */
         evtModifier:{
             type: "Function"
+        },
+
+        /**
+         * @property {string}
+         * Maintain the collection in sorted order based on the specified property name or path.
+
+            var Person = m_.Model.extend({
+                name: "Person",
+                properties: {
+                    firstName: {
+                        type: "string"
+                    },
+                    legs: {
+                        type: "ArrayCollection",
+                        params: {
+                            name: "leg",
+
+                            // Name of a property of leg:
+                            sortByProp: "strength"
+                            // OR path to a value within leg:
+                            sortByProp: "foot.length"
+                        }
+                    }
+                }
+            });
+
+        */
+        sortByProp: {
+            type: "string"
         }
     },
     methods: {
@@ -176,6 +206,7 @@ Collection.extend({
                 }
             }, this);
             this.length = this.data.length;
+            this.resort();
         },
 
         /**
@@ -210,6 +241,7 @@ Collection.extend({
          */
         add: function(item, silent) {
             this.data.push(item);
+            this.resort();
             this.length = this.data.length;
             if (!silent) {
                 this.trigger(this.name + ":new", item);
@@ -298,6 +330,23 @@ Collection.extend({
          */
         map: function(fn, context) {
             return this.data.map(fn,context);
+        },
+
+        /**
+         * @method
+         * @private
+         * Resorts using the sortByProp
+         */
+         resort: {
+            private: true,
+            method: function() {
+                var sortByProp = this.sortByProp;
+                if (sortByProp) {
+                    this.sortBy(function(item) {
+                        return m_.getValue(item, sortByProp);
+                    });
+                }
+            }
         },
 
         /**

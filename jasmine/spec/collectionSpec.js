@@ -326,4 +326,31 @@ describe("Collections", function() {
         expect(newCount).toEqual(2);
         expect(removeCount).toEqual(3);
     });
+
+    it("Should maintain sorted collection", function() {
+        var newCount = 0, removeCount = 0;
+        var Cat = m_.Model.extend({
+            name: "Cat",
+            properties: {
+                age: {
+                    type: "number"
+                },
+                kittens: {
+                    type: "ArrayCollection",
+                    params: {
+                        sortByProp: "age"
+                    }
+                }
+            }
+        });
+
+
+
+        var cat = new Cat({
+            kittens: [new Cat({age:35}),new Cat({age:25}),new Cat({age:45})]
+        });
+        expect(cat.kittens.map(function(item){return item.age;})).toEqual([25,35,45]);
+        cat.kittens.add(new Cat({age:3}));
+        expect(cat.kittens.map(function(item){return item.age;})).toEqual([3,25,35,45]);
+    });
 });

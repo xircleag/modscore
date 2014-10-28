@@ -345,6 +345,18 @@
   // Object Functions
   // ----------------
 
+  _.getValue = function(obj, propName) {
+    var names = propName.split(".");
+    names.forEach(function(name) {
+      if (obj && typeof obj == "object") {
+        obj = obj[name];
+      } else {
+        obj = undefined;
+      }
+    });
+    return obj;
+  };
+
   // Shortcut function for checking if an object has a given property directly
   // on itself (in other words, not on a prototype).
   _.has = function(obj, key) {

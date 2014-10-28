@@ -272,6 +272,12 @@ describe("modscore", function() {
                 objG = new g();
             });
 
+            it("m_.getValue", function() {
+                expect(m_.getValue({hey: "ho"}, "hey")).toEqual("ho");
+                expect(m_.getValue({hey: "ho"}, "hey.ho")).toBe(undefined);
+                expect(m_.getValue({hey: {ho: "there"}}, "hey.ho")).toEqual("there");
+            });
+
             describe("m_.has", function() {
                 it("Properties defined in constructor or on object should return true", function() {
                     expect(m_.has(objG, "e")).toEqual(true);

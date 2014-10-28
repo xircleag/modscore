@@ -925,7 +925,7 @@
         this.off();
     };
 
-    Model.prototype.collectionEvent = function(name) {
+    Model.prototype.collectionEvent = function() {
         this.trigger.apply(this, arguments);
     };
 
