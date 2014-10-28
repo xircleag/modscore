@@ -183,16 +183,19 @@ describe("Collections", function() {
         var cat = new Cat();
         cat.on({
             "kitten:new": function(item) {
+                debugger;
                 new1 = true;
                 expect(item).toBe(kitten);
             },
             "kitten:change": function(item, fieldName, newValue, oldValue) {
+                debugger;
                 change1 = true;
                 expect(item).toBe(kitten);
                 expect(fieldName).toEqual("age");
                 expect(newValue).toEqual(55);
             },
             "kitten:change:age": function(item, newValue, oldValue) {
+                debugger;
                 change2 = true;
                 expect(item).toBe(kitten);
                 expect(newValue).toEqual(55);
@@ -200,6 +203,7 @@ describe("Collections", function() {
         });
         var kitten = new Cat();
         cat.littleCats.add(kitten);
+        debugger;
         kitten.age = 55;
         expect(new1).toEqual(true);
         expect(change1).toEqual(true);
@@ -246,5 +250,80 @@ describe("Collections", function() {
 
         kitten.age = 55;
         expect(change2).toBe(true);
+    });
+
+
+    it("Should provide basic events for basic types", function() {
+        var new1 = false, remove1 = false;
+        var Cat = m_.Model.extend({
+            name: "Cat",
+            properties: {
+                age: {
+                    type: "number"
+                },
+                scores: {
+                    type: "ArrayCollection"
+                }
+            }
+        });
+
+
+
+        var cat = new Cat({
+            scores: [10,20,25]
+        });
+        cat.on({
+            "item:new": function(item) {
+                new1 = true;
+                expect(item).toEqual(35);
+            },
+            "item:remove": function(item) {
+                remove1 = true;
+                expect(item).toEqual(35);
+            }
+        });
+
+        expect(cat.scores.at(2)).toEqual(25);
+        expect(new1).toEqual(false);
+        cat.scores.add(35);
+        expect(new1).toEqual(true);
+
+        expect(remove1).toEqual(false);
+        cat.scores.remove(35);
+        expect(remove1).toEqual(true);
+    });
+
+    it("Should allow setting the entire collection", function() {
+        var newCount = 0, removeCount = 0;
+        var Cat = m_.Model.extend({
+            name: "Cat",
+            properties: {
+                age: {
+                    type: "number"
+                },
+                scores: {
+                    type: "ArrayCollection"
+                }
+            }
+        });
+
+
+
+        var cat = new Cat({
+            scores: [10,20,25]
+        });
+        cat.on({
+            "item:new": function(item) {
+                newCount++;
+            },
+            "item:remove": function(item) {
+                removeCount++;
+            }
+        });
+
+        cat.scores = [12,23];
+        expect(cat.scores.getData()).toEqual([12,23]);
+        expect(newCount).toEqual(2);
+        expect(removeCount).toEqual(3);
     });
 });

@@ -74,7 +74,7 @@ module.exports = function(grunt) {
 
 		jasmine: {
 			options: {
-				specs: ['jasmine/spec/overscoreSpec.js', 'jasmine/spec/modelSpec.js']
+				specs: ['jasmine/spec/overscoreSpec.js', 'jasmine/spec/modelSpec.js', 'jasmine/spec/collectionSpec.js']
 			},
 			modscore: {
 				src: ["build/modscore.js"],
@@ -242,10 +242,7 @@ module.exports = function(grunt) {
 			      username: credentials.saucelabs.user,
 			      key: credentials.saucelabs.pass,
 
-			      /* WARNING: saucelabs only handles small test scripts, so longer test scripts
-			       * must be broken into separate URLs
-			       */
-			      urls: ['http://127.0.0.1:9023/jasmine/ModelRunner.html','http://127.0.0.1:9023/jasmine/PrivateRunner.html','http://127.0.0.1:9023/jasmine/SpecRunner.html'],
+			      urls: ['http://127.0.0.1:9023/jasmine/ModelRunner.html','http://127.0.0.1:9023/jasmine/SpecRunner.html'],
 			      //build: process.env.CI_BUILD_NUMBER,
 			      testname: 'Sauce Unit Test for modscore',
 			      browsers: [

@@ -105,7 +105,9 @@ Collection.extend({
                 this.length = this.data.length;
                 this.trigger(this.name + ":remove", item);
                 this.trigger("change");
-                item.off("all", null, this);
+                if (item instanceof Model) {
+                    item.off("all", null, this);
+                }
             }
         },
         indexOf: function(item) {
@@ -114,13 +116,15 @@ Collection.extend({
         find: function(fn) {
             var d = this.data,
                 length = d.length;
-            for (i = 0; i < length; i++) {
+            for (var i = 0; i < length; i++) {
                 if (fn(d[i])) return d[i];
             }
         },
 
         each: function(fn, context) {
-            this.data.forEach(fn, context);
+            // Iterate over a copy because the iteration may modify the this.data.
+            var d = this.getData();
+            d.forEach(fn, context);
         },
         map: function(fn, context) {
             return this.data.map(fn,context);

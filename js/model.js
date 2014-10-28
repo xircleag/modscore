@@ -581,13 +581,9 @@
                 var type = Model.getClass(def.type);
                 if (type && type.prototype instanceof Model.getClass("Collection")) {
                     this[name] = new type(def.params);
-                    this[name].on("all", this.collectionEvent.bind(this));
-                    if (name in params && m_.isArray(params[name])) {
-                        params[name].forEach(function(item) {
-                            this[name].add(item);
-                        }, this);
-                    }
-                } else if (name in params) {
+                    this[name].on("all", this.collectionEvent, this);
+                }
+                if (name in params) {
                     this[name] = params[name];
                 } else if (def.type.indexOf("[") === 0) {
                     this[name] = [];
@@ -668,6 +664,8 @@
     }
 
     function genericSetter(def, caller, name, inValue) {
+        var type, validator, validatorResult;
+
         /* istanbul ignore if: Privates not tested */
         if (def.private || def.privateSetter) {
             if (!isPrivateAllowed.call(this, caller)) {
@@ -701,6 +699,11 @@
                 altValue = adjuster(inValue);
                 if (altValue !== undefined) inValue = altValue;
             }
+        } else {
+            type = def.type ? Model.getClass(def.type) : null;
+            if (type && type.prototype instanceof Model.getClass("Collection")) {
+                if (this.adjustCollection(inValue, name)) return;
+            }
         }
 
         /* Step 3: Simplify code by assuming undefined is never used */
@@ -713,7 +716,7 @@
          * only invalid if the field is required.
          */
         if (inValue !== null) {
-            var validator = getValidator(def.type), validatorResult;
+            validator = getValidator(def.type);
             if (validator) {
                 if (def.type.charAt(0) == "[") {
                     if (inValue !== null) {
@@ -740,7 +743,7 @@
                     }
                 };
                 if (def.type.charAt(0) == "[") {
-                    var type = def.type.substring(1,def.type.length-1);
+                    type = def.type.substring(1,def.type.length-1);
                     m_.each(inValue, function(v) {
                         validator.call(this, v, type);
                     }, this);
@@ -890,6 +893,17 @@
         if (result && !isNaN(result.getTime())) return result;
     };
 
+    Model.prototype.adjustCollection = function(inValue, inName) {
+        if (m_.isArray(inValue)) {
+            var collection = this[inName];
+            collection.each(function(item) {collection.remove(item);});
+            inValue.forEach(function(item) {
+                collection.add(item);
+            });
+            return true;
+        }
+    };
+
     /**
      * Every Class can provide a init method.  This one is just a place holder
      * @method init
@@ -911,7 +925,7 @@
         this.off();
     };
 
-    Model.prototype.collectionEvent = function(name, item) {
+    Model.prototype.collectionEvent = function(name) {
         this.trigger.apply(this, arguments);
     };
 

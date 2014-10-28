@@ -579,7 +579,7 @@
         if (d === null || d === undefined) d = "";
         return d;
   });
-}
+};
 
 
   module.exports = _; // Used when importing this via browserify/npm
