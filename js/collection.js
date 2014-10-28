@@ -143,7 +143,9 @@ Collection.extend({
             // destroy may side effect modifying this.data, so iterate over a copy
             var d = this.data.concat([]);
             d.forEach(function(item) {
-                item.destroy();
+                if (item instanceof Model) {
+                    item.destroy();
+                }
             });
             this.$super();
         }
