@@ -559,8 +559,9 @@
     var SilentValue = m_.SilentValue = function(inValue) {
         this.value = inValue;
     };
-    var classRegistry = {};
-    var roleRegistry = {};
+    if (!global.modscore) global.modscore = {};
+    var classRegistry = global.modscore.classRegistry = global.modscore.classRegistry || {};
+    var roleRegistry = global.modscore.roleRegistry = global.modscore.roleRegistry || {};
 
     var Model = function(params) {
         if (!modelInit) {
@@ -581,7 +582,6 @@
                 var type = Model.getClass(def.type);
                 if (type && type.prototype instanceof Model.getClass("Collection")) {
                     this[name] = new type(def.params);
-                    this[name].on("all", this.collectionEvent, this);
                 }
                 if (name in params) {
                     this[name] = params[name];
@@ -901,6 +901,9 @@
                 collection.add(item);
             });
             return true;
+        } else if (inValue && inValue instanceof Model.getClass("Collection")) {
+            inValue.on("all", this.collectionEvent, this);
+            return false;
         }
     };
 
@@ -961,6 +964,14 @@
      * @method
      */
      Model.prototype.toJson = function() {
+        return JSON.stringify(this.toObject());
+     };
+
+     /**
+     * Creates a JSON structure using only the non-private properties of the object
+     * @method
+     */
+     Model.prototype.toObject = function() {
         var obj = {};
 
         m_.each(this.__class.$meta.properties, function(def, name) {
@@ -968,8 +979,10 @@
                 obj[name] = this[name];
             }
         }, this);
-        return JSON.stringify(obj);
+        return obj;
      };
+
+
 
     /* Unfortunate use of eval, needed until we find a better way to make the class name actually show up
      * in the debugger as the name of the class.  Previously showed up as Model.extend.newfunc.
@@ -1086,7 +1099,8 @@
             properties: fullSpec,
             superclass: this,
             defaults: this.$meta ? m_.clone(this.$meta.defaults) : {},
-            functions: fullFunc
+            functions: fullFunc,
+            fullName: args.name
         };
 
         // Any third party dev can access person.__class.$meta.functions and add/remove stuff to it.
