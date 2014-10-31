@@ -563,6 +563,11 @@
     var classRegistry = global.modscore.classRegistry = global.modscore.classRegistry || {};
     var roleRegistry = global.modscore.roleRegistry = global.modscore.roleRegistry || {};
 
+    if (classRegistry.Model) {
+        module.exports = classRegistry.Model;
+        return;
+    }
+
     var Model = function(params) {
         if (!modelInit) {
             if (!params) params = {};
@@ -736,6 +741,10 @@
                 validator = function(inValue, type) {
                     if (classRegistry[type]) {
                         if (!(inValue instanceof classRegistry[type])) {
+                            throw name + ": must be of type " + type;
+                        }
+                    } else if (roleRegistry[type]) {
+                        if (!(inValue instanceof roleRegistry[type])) {
                             throw name + ": must be of type " + type;
                         }
                     } else if (({}).toString.call(inValue) != "[object " +  type + "]") {
@@ -1165,3 +1174,4 @@
     }, this);
 
     module.exports = Model;
+    classRegistry.Model = Model;
