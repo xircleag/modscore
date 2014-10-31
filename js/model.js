@@ -556,9 +556,7 @@
 
     var isNode = typeof global !== "undefined" && typeof window === "undefined" || navigator.userAgent.match(/PhantomJS/);
 
-    var SilentValue = m_.SilentValue = function(inValue) {
-        this.value = inValue;
-    };
+
     if (!global.modscore) global.modscore = {};
     var classRegistry = global.modscore.classRegistry = global.modscore.classRegistry || {};
     var roleRegistry = global.modscore.roleRegistry = global.modscore.roleRegistry || {};
@@ -567,6 +565,10 @@
         module.exports = classRegistry.Model;
         return;
     }
+
+    var SilentValue = m_.SilentValue = function(inValue) {
+        this.value = inValue;
+    };
 
     var Model = function(params) {
         if (!modelInit) {
@@ -592,6 +594,31 @@
                     this[name] = params[name];
                 } else if (def.type.indexOf("[") === 0) {
                     this[name] = [];
+                }
+            }, this);
+            m_.each(defs, function(def,name) {
+                var type = Model.getClass(def.type);
+                if (this[name] == undefined && def.create && type && type.prototype instanceof Model) {
+                    var params = {};
+                    m_.each(def.params, function(value, name) {
+                        if (String(value).indexOf("this.") == 0) {
+                            params[name] = this[value.substring(5)];
+                        } else {
+                            params[name] = value;
+                        }
+                    }, this);
+                    this[name] = new type(params);
+                    if (def.events) {
+                        var events = {};
+                        m_.each(def.events, function(value, name) {
+                            if (String(value).indexOf("this.") == 0) {
+                                events[name] = this[value.substring(5)].bind(this);
+                            } else {
+                                events[name] = value;
+                            }
+                        }, this);
+                        this[name].on(events);
+                    }
                 }
             }, this);
             delete this.__values.__processConstructorParams;
