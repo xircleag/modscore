@@ -548,7 +548,7 @@
 //       Events can be called via m_.defer() to wait 1ms before firing.
 // TODO: Add listeners to constructor?
 // TODO: Support for private methods?
-
+(function() {
     var m_ = require("./util.js");
     var Events = require("./events.js");
     var modelInit = false;
@@ -695,9 +695,11 @@
         return this.__values[getInternalName(name)];
     }
 
-    function genericSetter(def, caller, name, inValue) {
-        var type, validator, validatorResult;
 
+    function setterPreProcess(def, caller, name, inValue, values) {
+        var result = {};
+        var validatorResult;
+        var type, validator;
         /* istanbul ignore if: Privates not tested */
         if (def.private || def.privateSetter) {
             if (!isPrivateAllowed.call(this, caller)) {
@@ -706,10 +708,12 @@
             }
         }
 
-        var altValue, adjuster, silent, values = this.__values;
+        var altValue, adjuster, silent;
         if (inValue instanceof SilentValue) {
             silent = true;
             inValue = inValue.value;
+        } else if (values.__notinitialized) {
+            silent = true;
         }
 
         /* Step 1: If readOnly property, only set it if we are in the constructor */
@@ -798,11 +802,21 @@
             if (validatorResult) throw new Error(name + ": " + validatorResult);
         }
 
+        return {value: inValue, silent: silent};
+    }
+
+    function genericSetter(def, caller, name, inValue) {
+        var values = this.__values;
+        var result = setterPreProcess.apply(this, [def,caller,name,inValue, values]);
+        if (!result) return;
+        inValue = result.value;
+        var silent = result.silent;
+
         /* Step 6: Set the value */
         var internalName = getInternalName(name);
         var originalValue = values[internalName];
         if (originalValue !== inValue) {
-// Do not set a private array to be a pointer passed into the
+            // Do not set a private array to be a pointer passed into the
             // constructor... that pointer is something that the caller of the
             // constructor can modify at will, making it not very private.
             if (this.__values.__processConstructorParams && def.private && m_.isArray(inValue)) inValue = inValue.concat([]);
@@ -810,6 +824,8 @@
             if (!silent) {
                 this.trigger("change:" + name, inValue, originalValue);
                 this.trigger("change", name, inValue, originalValue);
+                var postUpdater = "update" + m_.camelCase(name, true);
+                if (this[postUpdater]) this[postUpdater](inValue, originalValue);
             }
         }
 
@@ -1087,7 +1103,8 @@
             shortName = className.replace(/^.*\./,""),
             propertySpec = args.properties || {},
             methods = args.methods,
-            staticConfig = args.statics || {};
+            staticConfig = args.statics || {},
+            parentProps = this.$meta.properties;
 
         modelInit = true;
 
@@ -1116,6 +1133,22 @@
                 cons.prototype[name] = func;
             }
         });
+
+        m_.each(propertySpec, function(def, name) {
+            if (typeof def != "object") {
+                var type = parentProps[name] ? parentProps[name].type : null;
+                var autoAdjust = parentProps[name] ? parentProps[name].autoAdjust : true;
+                if (type === null) {
+                    if (def == null) type = "any";
+                    else type = typeof def;
+                }
+                propertySpec[name] =  {
+                    type: type,
+                    defaultValue: def,
+                    autoAdjust: autoAdjust
+                };
+            }
+        },this);
 
         var fullSpec = this.$meta ? m_.extend({}, this.$meta.properties, propertySpec) : propertySpec;
 
@@ -1148,7 +1181,11 @@
         // parent method properties should not need to be defined
         m_.each(propertySpec, function(inValue, inKey) {
             defineProperty(cons, inKey, inValue);
-            if ("defaultValue" in inValue) cons.$meta.defaults[inKey] = inValue.defaultValue;
+            if (typeof inValue != "object") {
+                cons.$meta.defaults[inKey] = inValue;
+            } else if ("defaultValue" in inValue) {
+                cons.$meta.defaults[inKey] = inValue.defaultValue;
+            }
         }, this);
 
         cons.extend = Model.extend;
@@ -1202,3 +1239,4 @@
 
     module.exports = Model;
     classRegistry.Model = Model;
+})();

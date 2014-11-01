@@ -834,6 +834,204 @@ describe("Model", function() {
         });
     });
 
+    describe("Test wiring", function() {
+        it("Should create a manager with the specified properties and events", function() {
+            var Person = m_.Model.extend({name:"Person", properties:genericPersonDef});
+            var Employee = Person.extend({
+                properties: {
+                    manager: {
+                        type: "Person",
+                        create: true,
+                        params: {
+                            firstName: "Grand Wizard",
+                            lastName: "this.managerName"
+                        },
+                        events: {
+                            "change:lastName": "this.updateManagerName"
+                        }
+                    },
+                    managerName: {
+                        type: "string"
+                    }
+                },
+                methods: {
+                    updateManagerName: function() {
+                        this.managerName = this.manager.lastName;
+                    }
+                }
+            });
+            var e = new Employee({
+                firstName: "Tom",
+                lastName: "Foolery",
+                managerName: "TF2"
+            });
+            expect(e.manager.lastName).toEqual("TF2");
+            e.manager.lastName = "Tim";
+            expect(e.managerName).toEqual("Tim");
+        });
+
+        it("Should call updatePropName after any change unless silenced", function() {
+            var firstCount = 0, lastCount = 0;
+            var Person = m_.Model.extend({
+                properties: {
+                    firstName: {
+                        type: "string"
+                    },
+                    lastName: {
+                        type: "string",
+                        defaultValue: "Hey"
+                    }
+                },
+                methods: {
+                    updateFirstName: function(newValue, oldValue) {
+                        firstCount++;
+                        expect(newValue).toEqual("Doh!");
+                    },
+                    updateLastName: function() {
+                        lastCount++;
+                    }
+                }
+            });
+            var p = new Person();
+            expect(firstCount + lastCount).toEqual(0);
+            p.firstName = "Doh!";
+            expect(firstCount).toEqual(1);
+            expect(lastCount).toEqual(0);
+
+            p.lastName = "Argh!";
+            p.lastName += "Doh!";
+            expect(lastCount).toEqual(2);
+
+            firstCount = lastCount = 0;
+            p = new Person({
+                firstName: "A",
+                lastName: "B"
+            });
+            expect(firstCount + lastCount).toEqual(0);
+
+
+            p.firstName = new m_.SilentValue("Argh");
+            expect(firstCount + lastCount).toEqual(0);
+        });
+
+        it("Should allow for simple property definition", function() {
+            var Person = m_.Model.extend({
+                properties: {
+                    firstName: "fred",
+                    lastName: "flinstone",
+                    age: 55
+                }
+            });
+            var p = new Person();
+            expect(p.firstName).toEqual("fred");
+            expect(p.lastName).toEqual("flinstone");
+            expect(function() {
+                p.firstName = 50;
+            }).toThrow();
+            p.age = 50;
+            expect(p.age).toEqual(50);
+        });
+        it("Should automatically use autoAdjust for simple property defintions", function() {
+            var Person = m_.Model.extend({
+                properties: {
+                    firstName: "fred",
+                    lastName: "flinstone",
+                    age: 55
+                }
+            });
+            var p = new Person();
+            p.age = "51";
+            expect(p.age).toEqual(51);
+            expect(function() {
+                p.age = "fred";
+            }).toThrow();
+        });
+
+        it("Should maintain parent type for simple property definition", function() {
+            var Person = m_.Model.extend({
+                properties: {
+                    firstName: {
+                        type: "string",
+                        defaultValue: "fred"
+                    },
+                    lastName: "flinstone",
+                    age: 55
+                }
+            });
+            var AnotherPerson = Person.extend({
+                properties: {
+                    firstName: "Dan"
+                }
+            });
+            var p = new AnotherPerson();
+            expect(p.lastName).toEqual("flinstone");
+            expect(p.firstName).toEqual("Dan");
+            p.firstName = "Sam";
+            expect(p.firstName).toEqual("Sam");
+            expect(function() {
+                p.firstName = 5;
+            }).toThrow();
+        });
+
+        it("Should maintain parent autoAdjust for simple property definition", function() {
+            var Person = m_.Model.extend({
+                properties: {
+                    firstName: "fred",
+                    lastName: "flinstone",
+                    age: {
+                        type: "number"
+                    }
+                }
+            });
+            var AnotherPerson = Person.extend({
+                properties: {
+                    age: 85
+                }
+            });
+            var p = new AnotherPerson();
+            expect(p.age).toEqual(85);
+            p.age = 55;
+            expect(p.age).toEqual(55);
+            expect(function() {
+                p.age = "34";
+            }).toThrow();
+
+
+
+            var Person = m_.Model.extend({
+                properties: {
+                    firstName: "fred",
+                    lastName: "flinstone",
+                    age: {
+                        type: "number",
+                        autoAdjust: true
+                    }
+                }
+            });
+            var AnotherPerson = Person.extend({
+                properties: {
+                    age: 85
+                }
+            });
+            var p = new AnotherPerson();
+            p.age = "34";
+            expect(p.age).toEqual(34);
+            expect(function() {
+                p.age = "fred";
+            }).toThrow();
+
+
+            var AnotherPerson = Person.extend({
+                properties: {
+                    age: "hey"
+                }
+            });
+            expect(function() {
+                var p = new AnotherPerson();
+            }).toThrow();
+        });
+    });
+
     describe("Test misc Model Methods", function() {
 
         it("Should output suitable JSON", function() {
