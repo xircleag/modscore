@@ -399,11 +399,11 @@
         });
 
         var kermit = new Animal();
-        kermit.firstName = "";
+        kermit.first_name = "";
         console.log(kermit.firstName);
         > Fred
 
-        kermit.firstName = "Kermit";
+        kermit.first_name = "Kermit";
         console.log(kermit.firstName);
         > Kermit
 
@@ -413,6 +413,38 @@
     *     If the adjuster returns a value, then the property will be set to the returned value.
     *     - The adjuster is run BEFORE validation
     *     - The adjuster will cause autoAdjust to be ignored.
+    *
+    * - **Updater**: You can add an update method for your property to update behaviors for the new value.
+    * Your method is called AFTER the value has been set (unlike adjuster which is called before its set)
+
+        var Animal = m_.Model.extend({
+            name: "Animal",
+            properties: {
+                firstName: {
+                    type: "string"
+                },
+                fullName: {
+                    type: "string"
+                }
+            },
+            methods: {
+                updateFirstName: function(newValue, originalValue) {
+                    this.fullName = "Fred the " + this.first_name;
+                }
+            }
+        });
+
+        var kermit = new Animal();
+        kermit.firstName = "";
+        console.log(kermit.fullName);
+        > Fred the
+
+        kermit.firstName = "Kermit";
+        console.log(kermit.fullName);
+        > Fred the Kermit
+
+    *     your function must be named
+    *     update<cammelCase(propertyName)>; the first letter of your propertyName will always be upperCased (even if the property itself starts with a lowercase letter).
 
     * - **Validator**: You can add a custom validator for your property.
 
