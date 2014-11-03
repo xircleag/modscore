@@ -854,9 +854,10 @@
             if (this.__values.__processConstructorParams && def.private && m_.isArray(inValue)) inValue = inValue.concat([]);
             values[internalName] = inValue;
             if (!silent) {
+                // call postUpdater before notifying others of the change in the widget's state
+                var postUpdater = "update" + m_.camelCase(name, true);
                 this.trigger("change:" + name, inValue, originalValue);
                 this.trigger("change", name, inValue, originalValue);
-                var postUpdater = "update" + m_.camelCase(name, true);
                 if (this[postUpdater]) this[postUpdater](inValue, originalValue);
             }
         }
