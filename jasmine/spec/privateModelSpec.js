@@ -256,5 +256,26 @@ describe("PrivateModel", function() {
             p = Person.getOldPerson();
             expect(p.age).toEqual(1000);
         });
+
+        it("Private updateProp methods should still fire", function() {
+            var updaterCalled = false;
+            Person = m_.Model.extend({
+                name: "Person",
+                properties: genericPersonDef,
+                methods: {
+                    updateFirstName: {
+                        private: true,
+                        method: function(v) {
+                            updaterCalled = true;
+                        }
+                    }
+                }
+            });
+
+            var p = new Person();
+            p.firstName = "hey!";
+            expect(updaterCalled).toBe(true);
+            expect(p.firstName).toEqual("hey!");
+        });
     });
 });

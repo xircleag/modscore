@@ -584,6 +584,7 @@
     var m_ = require("./util.js");
     var Events = require("./events.js");
     var modelInit = false;
+    var disablePrivateLock = false;
     // NOTE: May have to change this once we start using browserify
 
     var isNode = typeof global !== "undefined" && typeof window === "undefined" || navigator.userAgent.match(/PhantomJS/);
@@ -855,10 +856,15 @@
             values[internalName] = inValue;
             if (!silent) {
                 // call postUpdater before notifying others of the change in the widget's state
-                var postUpdater = "update" + m_.camelCase(name, true);
+                disablePrivateLock = true;
+                try {
+                    var postUpdater = this["update" + m_.camelCase(name, true)];
+                    if (postUpdater) postUpdater.apply(this, [inValue, originalValue]);
+                } catch(e) {}
+                disablePrivateLock = false;
                 this.trigger("change:" + name, inValue, originalValue);
                 this.trigger("change", name, inValue, originalValue);
-                if (this[postUpdater]) this[postUpdater](inValue, originalValue);
+
             }
         }
 
@@ -882,14 +888,15 @@
 
     /* istanbul ignore next: Privates not tested; functionGetter only for private methods */
     function functionGetter(model, def, caller, name) {
-        if (def.private) {
+        if (def.private && !disablePrivateLock) {
             if (!isPrivateAllowed.call(this, caller) && !m_.isFunction(model[name])) {
                 console.warn(name + ": Private property accessed from context that is not a method of the object");
                 return;
             }
         }
-        return model.prototype.__functions[name];
+        return model.$meta.__functions[name];
     }
+
 
     /* istanbul ignore next: defineFunc for private methods only; not tested in phantomjs */
     function defineFunc(model, name, def, func) {
@@ -900,7 +907,7 @@
                 return functionGetter.call(this, model, def, get.caller, name);
             }
         });
-        model.prototype.__functions[name] = func;
+        model.$meta.__functions[name] = func;
     }
 
     // TODO: See about changing this to a hash instead of a function
@@ -1143,7 +1150,11 @@
 
         var cons= makeCtor(className);
         cons.prototype = new this();
-        cons.prototype.__functions = {};
+        cons.$meta = {
+            __functions: {},
+            defaults: {},
+            fullName: args.name
+        };
 
         if (args.name) classRegistry[className] = cons;
         if (args.role && !roleRegistry[args.role]) roleRegistry[args.role] = cons;
@@ -1183,7 +1194,7 @@
             }
         },this);
 
-        var fullSpec = this.$meta ? m_.extend({}, this.$meta.properties, propertySpec) : propertySpec;
+        var fullSpec = this.$meta.properties ? m_.extend({}, this.$meta.properties, propertySpec) : propertySpec;
 
         // Build a searchable index of all functions of this object so we can validate private accessors
         var fullFunc = {};
@@ -1197,13 +1208,10 @@
             fullFunc[funcName].push(func.toString());
         }, this);
 
-        cons.$meta = {
-            properties: fullSpec,
-            superclass: this,
-            defaults: this.$meta ? m_.clone(this.$meta.defaults) : {},
-            functions: fullFunc,
-            fullName: args.name
-        };
+        cons.$meta.properties = fullSpec;
+        cons.$meta.superclass = this;
+        cons.$meta.defaults = this.$meta.defaults ? m_.clone(this.$meta.defaults) : {};
+        cons.$meta.functions = fullFunc;
 
         // Any third party dev can access person.__class.$meta.functions and add/remove stuff to it.
         // So, freeze it.
@@ -1261,7 +1269,8 @@
         },
         superclass: null,
         defaults: {},
-        functions: {}
+        functions: {},
+        __functions: {}
     };
 
 
