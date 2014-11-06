@@ -1032,6 +1032,166 @@ describe("Model", function() {
         });
     });
 
+    describe("Test configuration support", function() {
+        it("Should apply window.modelConfig when class is defined", function() {
+            window.modelConfig = {
+                "testPerson": {
+                    firstName: "Doh",
+                    lastName: "Ray"
+                }
+            };
+
+            var Person = m_.Model.extend({
+                role: "testPerson",
+                properties: {
+                    firstName: "fred",
+                    lastName: "flinstone",
+                    age: {
+                        type: "number"
+                    }
+                }
+            });
+            var p = new Person();
+            expect(p.firstName).toEqual("Doh");
+            expect(p.lastName).toEqual("Ray");
+            p = new Person({firstName: "Argh"});
+            expect(p.firstName).toEqual("Argh");
+            expect(p.lastName).toEqual("Ray");
+        });
+
+        it("Should allow Model.configure() to change default property values",  function() {
+
+
+            var Person = m_.Model.extend({
+                properties: {
+                    firstName: "fred",
+                    lastName: "flinstone",
+                    age: {
+                        type: "number"
+                    }
+                }
+            });
+            Person.configure({
+                firstName: "Doh",
+                lastName: "Ray"
+            });
+            var p = new Person();
+            expect(p.firstName).toEqual("Doh");
+            expect(p.lastName).toEqual("Ray");
+            p = new Person({firstName: "Argh"});
+            expect(p.firstName).toEqual("Argh");
+            expect(p.lastName).toEqual("Ray");
+
+        });
+
+        it("Should allow Model.configure() to add a method to change the side-effects of a method", function() {
+            var Person = m_.Model.extend({
+                properties: {
+                    firstName: "fred",
+                    lastName: "flinstone"
+                },
+                methods: {
+                    tooString: function(prefix) {
+                        return prefix + " " + this.firstName + " " + this.lastName;
+                    }
+                }
+            });
+            Person.configure({
+                tooString: function(result, prefix) {
+                    this.firstName += "5";
+                }
+            });
+            var p = new Person();
+            expect(p.tooString("HEY")).toEqual("HEY fred flinstone");
+            expect(p.firstName).toEqual("fred5");
+        });
+
+        it("Should allow Model.configure() to chain multiple methods to change the behavior of a method", function() {
+            var Person = m_.Model.extend({
+                properties: {
+                    firstName: "fred",
+                    lastName: "flinstone"
+                },
+                methods: {
+                    tooString: function(prefix) {
+                        return prefix + " " + this.firstName + " " + this.lastName;
+                    }
+                }
+            });
+            Person.configure({
+                tooString: function(result, prefix) {
+                    this.firstName += "5";
+                }
+            });
+            Person.configure({
+                tooString: function(result, prefix) {
+                    this.lastName += "6";
+                }
+            });
+            var p = new Person();
+            expect(p.tooString("HEY")).toEqual("HEY fred flinstone");
+            expect(p.firstName).toEqual("fred5");
+            expect(p.lastName).toEqual("flinstone6");
+        });
+
+        it("Should allow Model.configure() to change the return vallue of a function... or leave the original return value", function() {
+            var Person = m_.Model.extend({
+                properties: {
+                    firstName: "fred",
+                    lastName: "flinstone"
+                },
+                methods: {
+                    tooString: function(prefix) {
+                        return prefix + " " + this.firstName + " " + this.lastName;
+                    }
+                }
+            });
+            Person.configure({
+                tooString: function(result, prefix) {
+                    return result + " HO";
+                }
+            });
+            var p = new Person();
+            expect(p.tooString("HEY")).toEqual("HEY fred flinstone HO");
+        });
+
+        it("Should allow Model.unconfigure() to remove any configurations", function() {
+            var Person = m_.Model.extend({
+                properties: {
+                    firstName: "fred",
+                    lastName: "flinstone"
+                },
+                methods: {
+                    tooString: function(prefix) {
+                        return prefix + " " + this.firstName + " " + this.lastName;
+                    }
+                }
+            });
+            debugger;
+            Person.configure({
+                tooString: function(result, prefix) {
+                    this.firstName += "5";
+                }
+            });
+            Person.configure({
+                tooString: function(result, prefix) {
+                    this.lastName += "6";
+                }
+            });
+            var p = new Person();
+            expect(p.tooString("HEY")).toEqual("HEY fred flinstone");
+            expect(p.firstName).toEqual("fred5");
+            expect(p.lastName).toEqual("flinstone6");
+            Person.unconfigure();
+
+            expect(p.tooString("HEY")).toEqual("HEY fred5 flinstone6");
+            expect(p.firstName).toEqual("fred5");
+            expect(p.lastName).toEqual("flinstone6");
+
+        });
+    });
+
+
     describe("Test misc Model Methods", function() {
 
         it("Should output suitable JSON", function() {

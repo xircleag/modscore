@@ -183,19 +183,16 @@ describe("Collections", function() {
         var cat = new Cat();
         cat.on({
             "kitten:new": function(item) {
-                debugger;
                 new1 = true;
                 expect(item).toBe(kitten);
             },
             "kitten:change": function(item, fieldName, newValue, oldValue) {
-                debugger;
                 change1 = true;
                 expect(item).toBe(kitten);
                 expect(fieldName).toEqual("age");
                 expect(newValue).toEqual(55);
             },
             "kitten:change:age": function(item, newValue, oldValue) {
-                debugger;
                 change2 = true;
                 expect(item).toBe(kitten);
                 expect(newValue).toEqual(55);
@@ -203,7 +200,7 @@ describe("Collections", function() {
         });
         var kitten = new Cat();
         cat.littleCats.add(kitten);
-        debugger;
+
         kitten.age = 55;
         expect(new1).toEqual(true);
         expect(change1).toEqual(true);

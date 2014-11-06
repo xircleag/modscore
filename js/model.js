@@ -670,6 +670,8 @@
             if (params.events) this.on(params.events);
 
             this.init.apply(this, arguments);
+            var postInit = this.postInit;
+            if (postInit) postInit.apply(this);
             delete this.__values.__notinitialized;
             Object.seal(this);
             this.trigger("new", this);
@@ -683,7 +685,7 @@
 
     /* istanbul ignore next: private methods can't be tested on phantomjs */
     function isPrivateAllowed(caller) {
-        if (this.__values.__notinitialized) return true;
+        if (modelInit || this.__values.__notinitialized) return true;
 
         // should only happen from nodejs
         if (isNode) return true;
@@ -1157,7 +1159,12 @@
         };
 
         if (args.name) classRegistry[className] = cons;
-        if (args.role && !roleRegistry[args.role]) roleRegistry[args.role] = cons;
+
+        // last one in is the provider of the role; relevant
+        // because if I subclass something, my subclass must be declared
+        // after the parent class.
+        if (args.role) roleRegistry[args.role] = cons;
+
         m_.each(methods || {}, function(funcDef, name) {
             var func, funcDefInternal = {};
             if (m_.isFunction(funcDef)) {
@@ -1230,6 +1237,8 @@
         }, this);
 
         cons.extend = Model.extend;
+        cons.configure = Model.configure;
+        cons.unconfigure = Model.unconfigure;
 
         Object.seal(cons.prototype);
 
@@ -1244,12 +1253,65 @@
             parent = parent.$meta.superclass;
         }
 
+        if (window.modelConfig) {
+            var config = modelConfig[className] || modelConfig[args.role];
+            if (config) cons.configure(config);
+        }
+
         modelInit = false;
         return cons;
     };
 
     Model.getClass = function(name) {
         return roleRegistry[name] || classRegistry[name];
+    };
+
+    Model.configure = function(options) {
+        var firstConfig = !this.$meta.configure;
+        var cacheConfig = firstConfig ? {} : this.$meta.configure;
+        this.$meta.configure = cacheConfig;
+
+        var defaults = this.$meta.defaults;
+        var properties = this.$meta.properties;
+        var methods = this.$meta.functions;
+        m_.each(options, function(value, name) {
+            // Warning: Overriding methods built into {} like toString
+            // will not work.  Fixing it is more messy than it looks.
+            if (properties[name]) {
+                if (!(name in cacheConfig)) cacheConfig[name] = defaults[name];
+                defaults[name] = value;
+            } else if (methods[name]) {
+                var originalFunc = this.prototype[name];
+                if (!(name in cacheConfig)) cacheConfig[name] = originalFunc;
+                this.prototype[name] = function() {
+                    var result = originalFunc.apply(this, arguments);
+                    var args = Array.prototype.slice.call(arguments);
+                    args.unshift(result);
+                    var result2 = options[name].apply(this, args);
+                    return (result2 !== undefined) ? result2 : result;
+                };
+            }
+        }, this);
+    };
+
+    /**
+     * Mostly needed for running test scripts.
+     * Remove all configurations from this Model
+     */
+    Model.unconfigure = function(options) {
+        if (this.$meta.configure) {
+            var properties = this.$meta.properties;
+            var defaults = this.$meta.defaults;
+            var methods = this.$meta.functions;
+
+            m_.each(this.$meta.configure, function(value, name) {
+                if (properties[name]) {
+                    defaults[name] = value;
+                } else if (methods[name]) {
+                    this.prototype[name] = value;
+                }
+            }, this);
+        }
     };
 
     Model.$meta = {
