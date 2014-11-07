@@ -658,7 +658,12 @@
 
             /* For each unset property with a default value, set the appropriate private/public value */
             var allDefaults = this.__class.$meta.defaults;
-            m_.defaults(this, allDefaults);
+
+            // NOTE: m_.defaults fails in case where we assigned an [] to an array type.
+            //m_.defaults(this, allDefaults);
+            m_.each(allDefaults, function(value, name) {
+                if (!(name in params)) this[name] = value;
+            }, this);
 
             // Enforce required fields
             m_.each(this.__class.$meta.properties, function(value, name, src) {

@@ -333,6 +333,18 @@ describe("Model", function() {
 
         });
 
+        it("It should support defaultValue for arrays", function() {
+            genericPersonDef.myData = {
+                type: "[string]",
+                defaultValue: ["Howdy", "There"]
+            };
+            var Person = m_.Model.extend({name:"Person", properties:genericPersonDef});
+
+            var p = new Person();
+            expect(p.myData).toEqual(["Howdy", "There"]);
+
+        });
+
 
         it("Should let us initialize but not change readonly properties", function() {
             var p = new Person();
