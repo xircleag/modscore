@@ -622,6 +622,7 @@
                 var type = Model.getClass(def.type);
                 if (type && type.prototype instanceof Model.getClass("Collection")) {
                     this[name] = new type(def.params);
+                    setupEvents.call(this, this[name], def);
                 }
                 if (name in params) {
                     this[name] = params[name];
@@ -641,17 +642,7 @@
                         }
                     }, this);
                     this[name] = new type(params);
-                    if (def.events) {
-                        var events = {};
-                        m_.each(def.events, function(value, name) {
-                            if (String(value).indexOf("this.") == 0) {
-                                events[name] = this[value.substring(5)].bind(this);
-                            } else {
-                                events[name] = value;
-                            }
-                        }, this);
-                        this[name].on(events);
-                    }
+                    setupEvents.call(this, this[name], def);
                 }
             }, this);
             delete this.__values.__processConstructorParams;
@@ -687,6 +678,20 @@
     // Enable events on all Model instances/sublcasses
     m_.extend(Model.prototype, Events);
     Model.prototype._events = {};
+
+    function setupEvents(obj, def) {
+        if (def.events) {
+            var events = {};
+            m_.each(def.events, function(value, name) {
+                if (String(value).indexOf("this.") == 0) {
+                    events[name] = this[value.substring(5)].bind(this);
+                } else {
+                    events[name] = value;
+                }
+            }, this);
+            obj.on(events);
+        }
+    }
 
     /* istanbul ignore next: private methods can't be tested on phantomjs */
     function isPrivateAllowed(caller) {

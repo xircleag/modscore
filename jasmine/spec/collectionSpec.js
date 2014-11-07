@@ -290,6 +290,33 @@ describe("Collections", function() {
         expect(remove1).toEqual(true);
     });
 
+    it("Should support the events config", function() {
+        var newItem;
+        var Cat = m_.Model.extend({
+            name: "Cat",
+            properties: {
+                age: {
+                    type: "number"
+                },
+                scores: {
+                    type: "ArrayCollection",
+                    events: {
+                        "item:new": function(item) {
+                            newItem = item;
+                        }
+                    }
+                }
+            }
+        });
+
+        var cat = new Cat({
+            scores: [10,20,25]
+        });
+        cat.scores.add(50);
+        expect(newItem).toEqual(50);
+    });
+
+
     it("Should allow setting the entire collection", function() {
         var newCount = 0, removeCount = 0;
         var Cat = m_.Model.extend({
