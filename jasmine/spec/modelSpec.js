@@ -1071,7 +1071,7 @@ describe("Model", function() {
             expect(p.lastName).toEqual("Ray");
         });
 
-        it("Should allow Model.configure() to change default property values",  function() {
+        it("Should allow Model.defaults() to change default property values",  function() {
 
 
             var Person = m_.Model.extend({
@@ -1083,7 +1083,7 @@ describe("Model", function() {
                     }
                 }
             });
-            Person.configure({
+            Person.defaults({
                 firstName: "Doh",
                 lastName: "Ray"
             });
@@ -1096,111 +1096,178 @@ describe("Model", function() {
 
         });
 
-        it("Should allow Model.configure() to add a method to change the side-effects of a method", function() {
+        it("Should allow Model.after() to add a method to add side-effects to a method", function() {
             var Person = m_.Model.extend({
                 properties: {
                     firstName: "fred",
                     lastName: "flinstone"
                 },
                 methods: {
-                    tooString: function(prefix) {
-                        return prefix + " " + this.firstName + " " + this.lastName;
+                    tooString: {
+                        method:  function(prefix) {
+                            return prefix + " " + this.firstName + " " + this.lastName;
+                        }
                     }
                 }
             });
-            Person.configure({
-                tooString: function(result, prefix) {
-                    this.firstName += "5";
-                }
+            Person.after("tooString", function(prefix) {
+                this.firstName += "5" + prefix;
             });
             var p = new Person();
             expect(p.tooString("HEY")).toEqual("HEY fred flinstone");
-            expect(p.firstName).toEqual("fred5");
+            expect(p.firstName).toEqual("fred5HEY");
         });
 
-        it("Should allow Model.configure() to chain multiple methods to change the behavior of a method", function() {
+        it("Should allow Model.after() to chain multiple methods to change the behavior of a method", function() {
             var Person = m_.Model.extend({
                 properties: {
                     firstName: "fred",
                     lastName: "flinstone"
                 },
                 methods: {
-                    tooString: function(prefix) {
-                        return prefix + " " + this.firstName + " " + this.lastName;
+                    tooString: {
+                        method: function(prefix) {
+                            return prefix + " " + this.firstName + " " + this.lastName;
+                        }
                     }
                 }
             });
-            Person.configure({
-                tooString: function(result, prefix) {
-                    this.firstName += "5";
+            Person.after("tooString", function(prefix) {
+                this.firstName += "5" + prefix;
+            });
+            Person.after("tooString", function(prefix) {
+                this.lastName += "6" + prefix;
+            });
+            var p = new Person();
+            expect(p.tooString("HEY")).toEqual("HEY fred flinstone");
+            expect(p.firstName).toEqual("fred5HEY");
+            expect(p.lastName).toEqual("flinstone6HEY");
+        });
+
+        it("Should allow Model.after() to change the return vallue of a function... or leave the original return value", function() {
+            var Person = m_.Model.extend({
+                properties: {
+                    firstName: "fred",
+                    lastName: "flinstone"
+                },
+                methods: {
+                    tooString: {
+                        method: function(prefix) {
+                            return prefix + " " + this.firstName + " " + this.lastName;
+                        }
+                    }
                 }
             });
-            Person.configure({
-                tooString: function(result, prefix) {
-                    this.lastName += "6";
+            Person.after("tooString",function(prefix) {
+                return prefix + "| " + this.lastName + ", " + this.firstName + " |" + prefix;
+            });
+            var p = new Person();
+            expect(p.tooString("HEY")).toEqual("HEY| flinstone, fred |HEY");
+        });
+
+        it("Should allow Model.defaults(null) to remove any configurations to defaults", function() {
+            var Person = m_.Model.extend({
+                properties: {
+                    firstName: "fred",
+                    lastName: "flinstone"
                 }
+            });
+            Person.defaults({
+                firstName: "Hey"
+            });
+
+            var p = new Person();
+            expect(p.firstName).toEqual("Hey");
+
+            Person.defaults(null);
+            p = new Person();
+            expect(p.firstName).toEqual("fred");
+        });
+
+        it("Should allow Model.after(methodName, null) to remove any configurations to after", function() {
+            var Person = m_.Model.extend({
+                properties: {
+                    firstName: "fred",
+                    lastName: "flinstone"
+                },
+                methods: {
+                    tooString: {
+                        method: function(prefix) {
+                            return prefix + " " + this.firstName + " " + this.lastName;
+                        }
+                    }
+                }
+            });
+
+            Person.after("tooString", function(prefix) {
+                this.firstName += "5";
+            });
+            Person.after("tooString", function(prefix) {
+                this.lastName += "6";
             });
             var p = new Person();
             expect(p.tooString("HEY")).toEqual("HEY fred flinstone");
             expect(p.firstName).toEqual("fred5");
             expect(p.lastName).toEqual("flinstone6");
-        });
+            Person.after("tooString", null);
 
-        it("Should allow Model.configure() to change the return vallue of a function... or leave the original return value", function() {
-            var Person = m_.Model.extend({
-                properties: {
-                    firstName: "fred",
-                    lastName: "flinstone"
-                },
-                methods: {
-                    tooString: function(prefix) {
-                        return prefix + " " + this.firstName + " " + this.lastName;
-                    }
-                }
-            });
-            Person.configure({
-                tooString: function(result, prefix) {
-                    return result + " HO";
-                }
-            });
-            var p = new Person();
-            expect(p.tooString("HEY")).toEqual("HEY fred flinstone HO");
-        });
-
-        it("Should allow Model.unconfigure() to remove any configurations", function() {
-            var Person = m_.Model.extend({
-                properties: {
-                    firstName: "fred",
-                    lastName: "flinstone"
-                },
-                methods: {
-                    tooString: function(prefix) {
-                        return prefix + " " + this.firstName + " " + this.lastName;
-                    }
-                }
-            });
-            debugger;
-            Person.configure({
-                tooString: function(result, prefix) {
-                    this.firstName += "5";
-                }
-            });
-            Person.configure({
-                tooString: function(result, prefix) {
-                    this.lastName += "6";
-                }
-            });
-            var p = new Person();
+            p = new Person();
             expect(p.tooString("HEY")).toEqual("HEY fred flinstone");
-            expect(p.firstName).toEqual("fred5");
-            expect(p.lastName).toEqual("flinstone6");
-            Person.unconfigure();
-
-            expect(p.tooString("HEY")).toEqual("HEY fred5 flinstone6");
-            expect(p.firstName).toEqual("fred5");
-            expect(p.lastName).toEqual("flinstone6");
+            expect(p.firstName).toEqual("fred");
+            expect(p.lastName).toEqual("flinstone");
 
         });
+
+
+        it("Should allow Model.around() to asynchronously call the original function", function(done) {
+            var Person = m_.Model.extend({
+                properties: {
+                    firstName: "fred",
+                    lastName: "flinstone"
+                },
+                methods: {
+                    tooString: {
+                        method: function(prefix) {
+                            return prefix + " " + this.firstName + " " + this.lastName;
+                        }
+                    }
+                }
+            });
+            Person.around("tooString", function(originalFunc, prefix) {
+                var args = Array.prototype.slice.call(arguments);
+                args.shift(); // get rid of originalFunc
+                window.setTimeout(function() {
+
+                    expect(originalFunc(args)).toEqual("HEY fred flinstone");
+                    done();
+                }, 500);
+            });
+
+            var p = new Person();
+            expect(p.tooString("HEY")).toEqual(undefined);
+        });
+
+        it("Should allow Model.around() to modify arguments to the method", function() {
+            var Person = m_.Model.extend({
+                properties: {
+                    firstName: "fred",
+                    lastName: "flinstone"
+                },
+                methods: {
+                    tooString: {
+                        method: function(prefix) {
+                            return prefix + " " + this.firstName + " " + this.lastName;
+                        }
+                    }
+                }
+            });
+            Person.around("tooString", function(originalFunc, prefix) {
+                return originalFunc(prefix + " THERE");
+            });
+            var p = new Person();
+            expect(p.tooString("HEY")).toEqual("HEY THERE fred flinstone");
+        });
+
     });
 
 

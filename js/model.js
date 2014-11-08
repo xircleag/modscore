@@ -569,6 +569,54 @@
     * The above code will create a new Person or Robot, depending on which has been defined.
     * If both are defined, only the first one will be used.
     *
+    * ## Customization through AOP
+    * Any method defined using
+
+        methods: {
+            // This
+            funcA: {
+                method: function(){}
+            },
+            // Not This
+            funcB: function()
+        }
+
+    * can have their behaviors and side effects customized through aspect oriented concepts.
+    * The after() method lets you customize functions such as funcA, and optionally modify their
+    * return value.
+
+        // Side effect; funcA is run, then our function causes its
+        // side effects
+        Person.after("funcA", function(args) {
+            this.lastName += "ity";
+        });
+
+        // New return value; funcA is run, but the value returned
+        // to the caller is the value we've returned (if we return a value)
+        Person.after("funcA", function(args) {
+            return "Fred";
+        });
+
+    * The around() method lets methods that are defined to support it be wrapped
+    * in a new function that controls if its executed, and what its parameters are
+
+        // Decide whether or not to call funcA
+        Person.around("funcA", function(originalFunc, arg1, arg2...) {
+            if (!this.isDead) originalFunc(arg1,arg2);
+        });
+
+        // Modify the arguments to funcA
+        Person.around("funcA", function(originalFunc, arg1, arg2...) {
+            originalFunc("Fred",arg2);
+        });
+
+        // Call funcA asynchronously
+        Person.around("funcA", function(originalFunc, arg1, arg2...) {
+            checkWithServerIfPersonIsAlive(function(alive) {
+                if (alive) originalFunc(arg1,arg2);
+            });
+        });
+
     * END-GIT-README
     */
 
@@ -898,7 +946,7 @@
         });
     }
 
-    /* istanbul ignore next: Privates not tested; functionGetter only for private methods */
+    /* istanbul ignore next: Privates not tested; */
     function functionGetter(model, def, caller, name) {
         if (def.private && !disablePrivateLock) {
             if (!isPrivateAllowed.call(this, caller) && !m_.isFunction(model[name])) {
@@ -906,7 +954,29 @@
                 return;
             }
         }
-        return model.$meta.__functions[name];
+        var aopData = model.$meta.aopFuncs[name];
+        if (aopData && !def.private) {
+            var f = function() {
+                var i, result, tmp;
+                result = model.$meta.__functions[name].apply(this, arguments);
+                for (i = 0; i < aopData.after.length; i++) {
+                    tmp = aopData.after[i].apply(this, arguments);
+                    if (tmp !== undefined) result = tmp;
+                }
+                return result;
+            }.bind(this);
+            if (aopData.around.length) {
+                return function() {
+                    var args = Array.prototype.slice.call(arguments);
+                    args.unshift(f);
+                    return aopData.around[0].apply(this,args);
+                }.bind(this);
+            } else {
+                return f;
+            }
+        } else {
+            return model.$meta.__functions[name];
+        }
     }
 
 
@@ -1165,7 +1235,8 @@
         cons.$meta = {
             __functions: {},
             defaults: {},
-            fullName: args.name
+            fullName: args.name,
+            aopFuncs: {}
         };
 
         if (args.name) classRegistry[className] = cons;
@@ -1176,20 +1247,20 @@
         if (args.role) roleRegistry[args.role] = cons;
 
         m_.each(methods || {}, function(funcDef, name) {
-            var func, funcDefInternal = {};
+            var func, hasDefinition;
             if (m_.isFunction(funcDef)) {
                 func = funcDef;
             } else {
                 func = funcDef.method;
-                funcDefInternal.private = Boolean(funcDef.private);
+                hasDefinition = true;
             }
             // Used to insure that function renders correctly in the call stack
             func.displayName = shortName + "." + name;
 
             func.$name = name; // Used to verify private properties are accessed by object methods
             func.$super = cons.prototype[name];
-            if (funcDefInternal.private) {
-                defineFunc(cons, name, funcDefInternal, func);
+            if (hasDefinition) {
+                defineFunc(cons, name, funcDef, func);
             } else {
                 cons.prototype[name] = func;
             }
@@ -1247,8 +1318,9 @@
         }, this);
 
         cons.extend = Model.extend;
-        cons.configure = Model.configure;
-        cons.unconfigure = Model.unconfigure;
+        cons.defaults = Model.defaults;
+        cons.around = Model.around;
+        cons.after = Model.after;
 
         Object.seal(cons.prototype);
 
@@ -1265,43 +1337,89 @@
 
         if (window.modelConfig) {
             var config = modelConfig[className] || modelConfig[args.role];
-            if (config) cons.configure(config);
+            if (config) cons.defaults(config);
         }
 
         modelInit = false;
         return cons;
     };
 
+    /**
+     * @static
+     * @method
+     * @param {string} name
+     * Returns the class that has the specified name or role
+     */
     Model.getClass = function(name) {
         return roleRegistry[name] || classRegistry[name];
     };
 
-    Model.configure = function(options) {
-        var firstConfig = !this.$meta.configure;
-        var cacheConfig = firstConfig ? {} : this.$meta.configure;
-        this.$meta.configure = cacheConfig;
+    function setupAOP(aopFuncs, name, type, newFunc) {
+        if (!aopFuncs[name]) aopFuncs[name]= {after:[],around:[]};
+        var funcs = aopFuncs[name][type];
+        if (!newFunc) {
+            funcs.splice(0,funcs.length);
+        } else {
+            funcs.push(newFunc);
+        }
+    }
 
-        var defaults = this.$meta.defaults;
-        var properties = this.$meta.properties;
-        var methods = this.$meta.functions;
-        m_.each(options, function(value, name) {
-            // Warning: Overriding methods built into {} like toString
-            // will not work.  Fixing it is more messy than it looks.
-            if (properties[name]) {
-                if (!(name in cacheConfig)) cacheConfig[name] = defaults[name];
-                defaults[name] = value;
-            } else if (methods[name]) {
-                var originalFunc = this.prototype[name];
-                if (!(name in cacheConfig)) cacheConfig[name] = originalFunc;
-                this.prototype[name] = function() {
-                    var result = originalFunc.apply(this, arguments);
-                    var args = Array.prototype.slice.call(arguments);
-                    args.unshift(result);
-                    var result2 = options[name].apply(this, args);
-                    return (result2 !== undefined) ? result2 : result;
-                };
-            }
-        }, this);
+    /**
+     * @static
+     * @method
+     * @param {string} methodName
+     * @param {Function} newFunc
+     * Whenever the method on this object identified by methodName is called,
+     * will call that method and then immediately call your newFunc.
+     * If your newFunc returns a value, that value will be returned by the call
+     * to methodName instead of the original return value.
+     * @note Only methods that have been designated for supporting around/after can do this.
+     */
+    Model.after = function(methodName, newFunc) {
+        setupAOP(this.$meta.aopFuncs, methodName, "after", newFunc);
+    };
+
+    /**
+     * @static
+     * @method
+     * @param {string} methodName
+     * @param {Function} newFunc
+     * Whenever the method on this object identified by methodName is called,
+     * newFunc is called instead of the specified method.
+     * newFunc will be provided the original call arguments plus the original method.
+
+        Person.around("increaseAge", function(originalFunction, years) {
+            if (!this.isDead) originalFunction(years);
+        });
+
+    * You can asynchronously call originalFunction (but if the caller of
+    * originalFunction expected a return value, this will be lost).
+    *
+    * You can change the arguments to originalFunction if needed
+    *
+    * You can choose not to call originalFunction.
+    * @note Only methods that have been designated for supporting around/after can do this.
+    */
+    Model.around = function(methodName, newFunc) {
+        setupAOP(this.$meta.aopFuncs, methodName, "around", newFunc);
+    };
+
+    Model.defaults = function(options) {
+        var firstConfig = !this.$meta.configure;
+        if (firstConfig) {
+            this.$meta.configure = m_.clone(this.$meta.defaults);
+        }
+        if (options == null) {
+            this.$meta.defaults = m_.clone(this.$meta.configure);
+        } else {
+            var defaults = this.$meta.defaults;
+            var properties = this.$meta.properties;
+            m_.each(options, function(value, name) {
+                if (properties[name]) {
+                    defaults[name] = value;
+                }
+            }, this);
+        }
     };
 
     /**

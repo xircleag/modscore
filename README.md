@@ -545,3 +545,48 @@ and any number of classes can implement that role:
 The above code will create a new Person or Robot, depending on which has been defined.
 If both are defined, only the first one will be used.
 
+## Customization through AOP
+Any method defined using
+
+        methods: {
+            // This
+            funcA: {
+                method: function(){}
+            },
+            // Not This
+            funcB: function()
+        }
+can have their behaviors and side effects customized through aspect oriented concepts.
+The after() method lets you customize functions such as funcA, and optionally modify their
+return value.
+
+        // Side effect; funcA is run, then our function causes its
+        // side effects
+        Person.after("funcA", function(args) {
+            this.lastName += "ity";
+        });
+
+        // New return value; funcA is run, but the value returned
+        // to the caller is the value we've returned (if we return a value)
+        Person.after("funcA", function(args) {
+            return "Fred";
+        });
+The around() method lets methods that are defined to support it be wrapped
+in a new function that controls if its executed, and what its parameters are
+
+        // Decide whether or not to call funcA
+        Person.around("funcA", function(originalFunc, arg1, arg2...) {
+            if (!this.isDead) originalFunc(arg1,arg2);
+        });
+
+        // Modify the arguments to funcA
+        Person.around("funcA", function(originalFunc, arg1, arg2...) {
+            originalFunc("Fred",arg2);
+        });
+
+        // Call funcA asynchronously
+        Person.around("funcA", function(originalFunc, arg1, arg2...) {
+            checkWithServerIfPersonIsAlive(function(alive) {
+                if (alive) originalFunc(arg1,arg2);
+            });
+        });
