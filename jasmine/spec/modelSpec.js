@@ -1305,7 +1305,7 @@ describe("Model", function() {
 
         });
 
-        it("Should warn when after() and around() are on a method that does not support AOP", function() {
+        xit("Should warn when after() and around() are on a method that does not support AOP", function() {
             var Person = m_.Model.extend({
                 properties: {
                     firstName: "fred",

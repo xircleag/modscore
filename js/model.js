@@ -990,9 +990,6 @@
             }
         });
         model.$meta.__functions[name] = func;
-        if (!def.private) {
-            model.$meta.aopFuncs[name]= {after:[],around:[]};
-        }
     }
 
     // TODO: See about changing this to a hash instead of a function
@@ -1372,7 +1369,7 @@
     };
 
     function setupAOP(aopFuncs, name, type, newFunc) {
-        if (!aopFuncs[name]) throw new Error(name + " is not available for AOP " + type + "() calls");
+        if (!aopFuncs[name]) aopFuncs[name]= {after:[],around:[]};
         var funcs = aopFuncs[name][type];
         if (!newFunc) {
             funcs.splice(0,funcs.length);
