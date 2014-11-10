@@ -1268,6 +1268,62 @@ describe("Model", function() {
             expect(p.tooString("HEY")).toEqual("HEY THERE fred flinstone");
         });
 
+        it("Should allow Model.after() and around() to be added via window.modelConfig", function() {
+            var aroundCalled = false;
+            window.modelConfig = {
+                "Person": {
+                    "after": {
+                        "tooString": function(prefix) {
+                            return "fred's " + prefix;
+                        }
+                    },
+                    "around": {
+                        "tooString": function(originalFunc, prefix) {
+                            aroundCalled = true;
+                            return originalFunc(prefix);
+                        }
+                    }
+                }
+            };
+            var Person = m_.Model.extend({
+                name: "Person",
+                properties: {
+                    firstName: "fred",
+                    lastName: "flinstone"
+                },
+                methods: {
+                    tooString: {
+                        method:  function(prefix) {
+                            return prefix + " " + this.firstName + " " + this.lastName;
+                        }
+                    }
+                }
+            });
+            var p = new Person();
+            expect(p.tooString("HEY")).toEqual("fred's HEY");
+            expect(aroundCalled).toEqual(true);
+
+        });
+
+        it("Should warn when after() and around() are on a method that does not support AOP", function() {
+            var Person = m_.Model.extend({
+                properties: {
+                    firstName: "fred",
+                    lastName: "flinstone"
+                },
+                methods: {
+                    tooString:   function(prefix) {
+                        return prefix + " " + this.firstName + " " + this.lastName;
+                    }
+                }
+            });
+
+            expect(function() {
+                Person.after("tooString", function(prefix) {
+                    this.firstName += "5";
+                });
+            }).toThrowError("tooString is not available for AOP after() calls");
+        });
     });
 
 

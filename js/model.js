@@ -990,6 +990,9 @@
             }
         });
         model.$meta.__functions[name] = func;
+        if (!def.private) {
+            model.$meta.aopFuncs[name]= {after:[],around:[]};
+        }
     }
 
     // TODO: See about changing this to a hash instead of a function
@@ -1337,7 +1340,21 @@
 
         if (window.modelConfig) {
             var config = modelConfig[className] || modelConfig[args.role];
-            if (config) cons.defaults(config);
+            if (config) {
+                if (config.around) {
+                    m_.each(config.around, function(func, name) {
+                        cons.around(name, func);
+                    }, this);
+                    delete config.around;
+                }
+                if (config.after) {
+                    m_.each(config.after, function(func, name) {
+                        cons.after(name, func);
+                    }, this);
+                    delete config.after;
+                }
+                cons.defaults(config);
+            }
         }
 
         modelInit = false;
@@ -1355,7 +1372,7 @@
     };
 
     function setupAOP(aopFuncs, name, type, newFunc) {
-        if (!aopFuncs[name]) aopFuncs[name]= {after:[],around:[]};
+        if (!aopFuncs[name]) throw new Error(name + " is not available for AOP " + type + "() calls");
         var funcs = aopFuncs[name][type];
         if (!newFunc) {
             funcs.splice(0,funcs.length);
