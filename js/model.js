@@ -954,7 +954,7 @@
                 return;
             }
         }
-        var aopData = model.$meta.aopFuncs[name];
+        var aopData = this.__class.$meta.aopFuncs[name];
         if (aopData && !def.private) {
             var f = function() {
                 var i, result, tmp;
