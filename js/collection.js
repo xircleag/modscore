@@ -371,6 +371,7 @@ Collection.extend({
                 if (aa < bb || aa && !bb) return -1;
                 return 0;
             });
+            this.trigger("change:data");
         },
 
         /**
@@ -379,6 +380,7 @@ Collection.extend({
          */
         sort: function(fn) {
             this.data.sort(fn);
+            this.trigger("change:data");
         },
 
         /**
