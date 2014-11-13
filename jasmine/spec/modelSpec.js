@@ -1359,6 +1359,36 @@ describe("Model", function() {
             expect(p.tooString1("Hum")).toEqual("HO Hum fred flinstone");
             expect(p.tooString2()).toEqual("Doh!");
         });
+
+        it("Should allow access to parent class methods to still work...", function() {
+            var Person = m_.Model.extend({
+                name: "Person",
+                properties: {
+                    firstName: "fred",
+                    lastName: "flinstone"
+                },
+                methods: {
+                    tooString1:   function(prefix) {
+                        return prefix + " " + this.firstName + " " + this.lastName;
+                    },
+                    tooString2: {
+                        method: function(prefix) {
+                            return "HEY " + prefix + " " + this.firstName + " " + this.lastName;
+                        }
+                    }
+                }
+            });
+
+            var SuperPerson = Person.extend({
+                name: "SuperPerson",
+                methods: {
+
+                }
+            });
+            var p = new SuperPerson();
+            expect(p.tooString1("Hum")).toEqual("Hum fred flinstone");
+            expect(p.tooString2("Hum")).toEqual("HEY Hum fred flinstone");
+        });
     });
 
 

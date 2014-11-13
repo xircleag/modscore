@@ -1234,7 +1234,7 @@
         var cons= makeCtor(className);
         cons.prototype = new this();
         cons.$meta = {
-            __functions: {},
+            __functions: m_.clone(this.$meta.__functions),
             defaults: {},
             fullName: args.name,
             aopFuncs: {}
