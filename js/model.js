@@ -955,10 +955,11 @@
             }
         }
         var aopData = this.__class.$meta.aopFuncs[name];
+        var func    = this.__class.$meta.__functions[name];
         if (aopData && !def.private) {
             var f = function() {
                 var i, result, tmp;
-                result = model.$meta.__functions[name].apply(this, arguments);
+                result = func.apply(this, arguments);
                 for (i = 0; i < aopData.after.length; i++) {
                     tmp = aopData.after[i].apply(this, arguments);
                     if (tmp !== undefined) result = tmp;
@@ -975,7 +976,7 @@
                 return f;
             }
         } else {
-            return model.$meta.__functions[name];
+            return func;
         }
     }
 
@@ -1262,7 +1263,8 @@
             if (hasDefinition) {
                 defineFunc(cons, name, funcDef, func);
             } else {
-                cons.prototype[name] = func;
+                cons.prototype[name] = cons.$meta.__functions[name] = func;
+
             }
         });
 

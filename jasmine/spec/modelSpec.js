@@ -1324,6 +1324,41 @@ describe("Model", function() {
                 });
             }).toThrowError("tooString is not available for AOP after() calls");
         });
+
+        it("Should allow subclassing of methods to work correctly", function() {
+            var Person = m_.Model.extend({
+                name: "Person",
+                properties: {
+                    firstName: "fred",
+                    lastName: "flinstone"
+                },
+                methods: {
+                    tooString1:   function(prefix) {
+                        return prefix + " " + this.firstName + " " + this.lastName;
+                    },
+                    tooString2: {
+                        method: function(prefix) {
+                            return "HEY" + prefix + " " + this.firstName + " " + this.lastName;
+                        }
+                    }
+                }
+            });
+
+            var SuperPerson = Person.extend({
+                name: "SuperPerson",
+                methods: {
+                    tooString1: function(prefix) {
+                        return "HO " + this.$super();
+                    },
+                    tooString2: function(prefix) {
+                        return "Doh!";
+                    }
+                }
+            });
+            var p = new SuperPerson();
+            expect(p.tooString1("Hum")).toEqual("HO Hum fred flinstone");
+            expect(p.tooString2()).toEqual("Doh!");
+        });
     });
 
 
