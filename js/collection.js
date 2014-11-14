@@ -230,6 +230,14 @@ Collection.extend({
         },
 
         /**
+         * @method
+         * Convenience method for getting the last item in the collection
+         */
+        last: function() {
+            return this.data[this.data.length-1];
+        },
+
+        /**
          * @event item:new
          * @param {Mixed} item - Item that was added
          * Note that if you provide an alternate name for the collection, it will be altName:new
