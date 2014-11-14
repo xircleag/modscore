@@ -393,6 +393,15 @@ Collection.extend({
 
         /**
          * @method
+         * Remove all data from the collection
+         */
+        clear: function() {
+            this.data = [];
+            this.length = 0;
+        },
+
+        /**
+         * @method
          * Destroy the collection and all of its data
          */
         destroy: function() {
