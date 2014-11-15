@@ -382,4 +382,29 @@ describe("Collections", function() {
         cat.kittens.sortByProp = "name";
         expect(cat.kittens.map(function(item){return item.name;})).toEqual(["a","m","n","z"]);
     });
+
+    it("Should return the last item", function() {
+        c = new Collection({
+            data: [new Person({firstName: "Fred"}), new Person({lastName: "Flinstone"})]
+        });
+        expect(c.last().lastName).toEqual("Flinstone");
+    });
+
+    it("Should return the index of the item", function() {
+       c = new Collection({
+            data: [new Person({firstName: "Fred"}), new Person({lastName: "Flinstone"})]
+        });
+        expect(c.indexOf(c.last())).toEqual(1);
+        expect(c.indexOf(null)).toEqual(-1);
+    });
+
+    it("Should clear the data", function() {
+       c = new Collection({
+            data: [new Person({firstName: "Fred"}), new Person({lastName: "Flinstone"})]
+        });
+       c.clear();
+        expect(c.indexOf(null)).toEqual(-1);
+        expect(c.length).toEqual(0);
+        expect(c.at(0)).toBe(undefined);
+    });
 });
