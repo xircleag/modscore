@@ -1271,7 +1271,7 @@
             func.$super = cons.prototype[name];
             if (hasDefinition) {
                 defineFunc(cons, name, funcDef, func);
-            } else if (cons.$meta.__functions[name]) {
+            } else if (cons.$meta.__functions.hasOwnProperty(name)) {
                 cons.$meta.__functions[name] = func;
             } else {
                 cons.prototype[name] = func;
