@@ -356,6 +356,8 @@ Will throw an error any time you set the value of that property to null, undefin
         ver piggy =new Animal({age: 90});
         console.log(piggy.age);
         > 90
+- **silent**: A property that does not trigger any events on changing.  Used for
+performance, and to avoid repeatedly triggering "all" subscriptions for internal properties
 ### Step 6: Add methods to refine property behaviors
 
 - **Adjuster**: You can add an adjuster method for your property to adjust the value being set.

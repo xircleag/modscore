@@ -372,6 +372,9 @@
         console.log(piggy.age);
         > 90
 
+    * - **silent**: A property that does not trigger any events on changing.  Used for
+    * performance, and to avoid repeatedly triggering "all" subscriptions for internal properties
+
     * ### Step 6: Add methods to refine property behaviors
     *
     * - **Adjuster**: You can add an adjuster method for your property to adjust the value being set.
@@ -904,7 +907,8 @@
         var result = setterPreProcess.apply(this, [def,caller,name,inValue, values]);
         if (!result) return;
         inValue = result.value;
-        var silent = result.silent;
+        var silent = result.silent || def.silent;
+
 
         /* Step 6: Set the value */
         var internalName = getInternalName(name);
@@ -1106,6 +1110,10 @@
 
     Model.prototype.collectionEvent = function() {
         this.trigger.apply(this, arguments);
+    };
+
+    Model.prototype.toString = function() {
+        return "[" + this.internalId + "]";
     };
 
     /**

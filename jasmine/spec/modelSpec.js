@@ -806,6 +806,28 @@ describe("Model", function() {
             expect(eventTriggered).toEqual(false);
         });
 
+        it("Should silence events if using the silent property definition", function() {
+            genericPersonDef.firstName.silent = true;
+            var Person = m_.Model.extend({name:"Person", properties:genericPersonDef});
+            var p = new Person();
+            var eventTriggered = false;
+            p.on("change", function() {
+                eventTriggered = true;
+            });
+            p.on("change:firstName", function() {
+                eventTriggered = true;
+            });
+
+            p.firstName = "John";
+
+            expect(p.firstName).toEqual("John");
+            expect(eventTriggered).toEqual(false);
+
+            p.lastName = "John";
+            expect(eventTriggered).toEqual(true);
+        });
+
+
         it("Should notify on being destroyed", function() {
             var Person = m_.Model.extend({name:"Person", properties:genericPersonDef});
             var p = new Person();
