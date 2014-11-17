@@ -1042,6 +1042,24 @@ describe("Model", function() {
                 var p = new AnotherPerson();
             }).toThrow();
         });
+
+        it("Should allow custom internalIds", function() {
+            var Person = m_.Model.extend({
+                properties: {
+                    firstName: "fred",
+                    lastName: "flinstone",
+                    age: {
+                        type: "number",
+                        autoAdjust: true
+                    }
+                }
+            });
+            var p1 = new Person({internalId: "HeyHo"});
+            expect(p1.internalId).toEqual("HeyHo1");
+            var p2 = new Person({internalId: "HeyHo"});
+            expect(p2.internalId).toEqual("HeyHo2");
+
+        });
     });
 
     describe("Test configuration support", function() {

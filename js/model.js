@@ -658,7 +658,12 @@
                 __notinitialized: true
             };
 
-            this.internalId = m_.uniqueId(this.__class.name);
+            if (params && params.internalId) {
+                this.internalId = m_.uniqueId(params.internalId)
+                delete params.internalId;
+            } else {
+                this.internalId = m_.uniqueId(this.__class.name);
+            }
 
             this.__isDestroyed = false;
             this._events = {};
