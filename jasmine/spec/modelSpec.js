@@ -1054,9 +1054,11 @@ describe("Model", function() {
                     }
                 }
             });
-            var p1 = new Person({internalId: "HeyHo"});
+
+            var params = {internalId: "HeyHo"};
+            var p1 = new Person(params);
             expect(p1.internalId).toEqual("HeyHo1");
-            var p2 = new Person({internalId: "HeyHo"});
+            var p2 = new Person(params);
             expect(p2.internalId).toEqual("HeyHo2");
 
         });

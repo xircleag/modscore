@@ -653,17 +653,13 @@
 
     var Model = function(params) {
         if (!modelInit) {
-            if (!params) params = {};
+            params = params ? m_.clone(params) : {};
             this.__values = {
                 __notinitialized: true
             };
 
-            if (params && params.internalId) {
-                this.internalId = m_.uniqueId(params.internalId)
-                delete params.internalId;
-            } else {
-                this.internalId = m_.uniqueId(this.__class.name);
-            }
+            this.internalId = m_.uniqueId(params && params.internalId ? params.internalId : this.__class.name)
+            delete params.internalId; // only safe because we cloned params; else this could cause problems.
 
             this.__isDestroyed = false;
             this._events = {};
