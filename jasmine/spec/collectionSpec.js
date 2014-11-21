@@ -351,7 +351,7 @@ describe("Collections", function() {
         expect(removeCount).toEqual(3);
     });
 
-    it("Should maintain sorted collection", function() {
+    it("Should maintain sorted collection via sortByProp", function() {
         var newCount = 0, removeCount = 0;
         var Cat = m_.Model.extend({
             name: "Cat",
@@ -366,6 +366,72 @@ describe("Collections", function() {
                     type: "ArrayCollection",
                     params: {
                         sortByProp: "age"
+                    }
+                }
+            }
+        });
+
+
+
+        var cat = new Cat({
+            kittens: [new Cat({age:35, name: "z"}),new Cat({age:25, name: "a"}),new Cat({age:45, name: "m"})]
+        });
+        expect(cat.kittens.map(function(item){return item.age;})).toEqual([25,35,45]);
+        cat.kittens.add(new Cat({age:3, name: "n"}));
+        expect(cat.kittens.map(function(item){return item.age;})).toEqual([3,25,35,45]);
+        cat.kittens.sortByProp = "name";
+        expect(cat.kittens.map(function(item){return item.name;})).toEqual(["a","m","n","z"]);
+    });
+
+    it("Should maintain reverse sorted collection via sortByProp", function() {
+        var newCount = 0, removeCount = 0;
+        var Cat = m_.Model.extend({
+            name: "Cat",
+            properties: {
+                name: {
+                    type: "string"
+                },
+                age: {
+                    type: "number"
+                },
+                kittens: {
+                    type: "ArrayCollection",
+                    params: {
+                        sortByProp: "age",
+                        reverseSort: true
+                    }
+                }
+            }
+        });
+
+
+
+        var cat = new Cat({
+            kittens: [new Cat({age:35, name: "z"}),new Cat({age:25, name: "a"}),new Cat({age:45, name: "m"})]
+        });
+        expect(cat.kittens.map(function(item){return item.age;})).toEqual([25,35,45].reverse());
+        cat.kittens.add(new Cat({age:3, name: "n"}));
+        expect(cat.kittens.map(function(item){return item.age;})).toEqual([3,25,35,45].reverse());
+        cat.kittens.sortByProp = "name";
+        expect(cat.kittens.map(function(item){return item.name;})).toEqual(["a","m","n","z"].reverse());
+    });
+
+
+    it("Should maintain sorted collection via sortByFunc", function() {
+        var newCount = 0, removeCount = 0;
+        var Cat = m_.Model.extend({
+            name: "Cat",
+            properties: {
+                name: {
+                    type: "string"
+                },
+                age: {
+                    type: "number"
+                },
+                kittens: {
+                    type: "ArrayCollection",
+                    params: {
+                        sortByFunc: function(a,b) {return a.age > b.age ? 1 : a.age == b.age ? 0 : -1;}
                     }
                 }
             }

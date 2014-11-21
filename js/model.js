@@ -666,38 +666,22 @@
 
             this.__isDestroyed = false;
             this._events = {};
+            this._subscriptions = {};
+
 
             /* For each property passed in via the constructor, set the appropriate private/public value */
             var defs = this.__class.$meta.properties;
             this.__values.__processConstructorParams = true;
             m_.each(defs, function(def, name) {
                 var type = Model.getClass(def.type);
-                if (type && type.prototype instanceof Model.getClass("Collection")) {
-                    this[name] = new type(def.params);
-                    setupEvents.call(this, this[name], def);
-                }
-                if (name in params) {
-                    this[name] = params[name];
-                } else if (def.type.indexOf("[") === 0) {
-                    this[name] = [];
+                if (!type || !(type.prototype instanceof Model.getClass("Collection"))) {
+                    if (name in params) {
+                        this[name] = params[name];
+                    } else if (def.type.indexOf("[") === 0) {
+                        this[name] = [];
+                    }
                 }
             }, this);
-            m_.each(defs, function(def,name) {
-                var type = Model.getClass(def.type);
-                if (this[name] == undefined && def.create && type && type.prototype instanceof Model) {
-                    var params = {};
-                    m_.each(def.params, function(value, name) {
-                        if (String(value).indexOf("this.") == 0) {
-                            params[name] = this[value.substring(5)];
-                        } else {
-                            params[name] = value;
-                        }
-                    }, this);
-                    this[name] = new type(params);
-                    setupEvents.call(this, this[name], def);
-                }
-            }, this);
-            delete this.__values.__processConstructorParams;
 
             /* For each unset property with a default value, set the appropriate private/public value */
             var allDefaults = this.__class.$meta.defaults;
@@ -707,6 +691,28 @@
             m_.each(allDefaults, function(value, name) {
                 if (!(name in params)) this[name] = value;
             }, this);
+
+
+            m_.each(defs, function(def,name) {
+                var type = Model.getClass(def.type);
+                if (type && type.prototype instanceof Model.getClass("Collection")) {
+                    this[name] = new type(def.params);
+                    setupEvents.call(this, this[name], def);
+                    if (name in params) this[name] = params[name];
+                } else if (this[name] == undefined && def.create && type && type.prototype instanceof Model) {
+                    var localParams = {};
+                    m_.each(def.params, function(value, name) {
+                        if (String(value).indexOf("this.") == 0) {
+                            localParams[name] = this[value.substring(5)];
+                        } else {
+                            localParams[name] = value;
+                        }
+                    }, this);
+                    this[name] = new type(localParams);
+                    setupEvents.call(this, this[name], def);
+                }
+            }, this);
+            delete this.__values.__processConstructorParams;
 
             // Enforce required fields
             m_.each(this.__class.$meta.properties, function(value, name, src) {
@@ -730,6 +736,7 @@
     // Enable events on all Model instances/sublcasses
     m_.extend(Model.prototype, Events);
     Model.prototype._events = {};
+    Model.prototype._subscriptions = {};
 
     function setupEvents(obj, def) {
         if (def.events) {
@@ -1159,7 +1166,7 @@
         var obj = {};
 
         m_.each(this.__class.$meta.properties, function(def, name) {
-            if (!def.private && !(name in Model.prototype) && name != "_events") {
+            if (!def.private && !(name in Model.prototype) && name != "_events" && name != "_subscriptions") {
                 obj[name] = this[name];
             }
         }, this);
@@ -1477,6 +1484,9 @@
                 type: "object"
             },
             _events: {
+                type: "object"
+            },
+            _subscriptions: {
                 type: "object"
             },
             internalId: {

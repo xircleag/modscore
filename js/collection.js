@@ -167,6 +167,15 @@ Collection.extend({
         */
         sortByProp: {
             type: "string"
+        },
+        /**
+         * @property
+         * Modifies sortByProp
+         */
+        reverseSort: false,
+
+        sortByFunc: {
+            type: "Function"
         }
     },
     methods: {
@@ -207,9 +216,9 @@ Collection.extend({
             }, this);
             this.length = this.data.length;
             this.resort();
-
-            this.on("change:sortByProp", this.resort , this);
         },
+        updateSortByProp: function() {this.resort();},
+        updateSortByFunc: function() {this.resort();},
 
         /**
          * Returns a copy of the data as an array.
@@ -247,15 +256,19 @@ Collection.extend({
          * @method
          * @param {Mixed} item - Object or value to add
          * @param {boolean} [silent=false] - Do not trigger "new" events
+         * @param {number} [index=last] - Use this to insert rather than append
          * Add an item to the collection and trigger events to anyone watching the collection
          */
-        add: function(item, silent) {
-            this.data.push(item);
+        add: function(item, silent, index) {
+            if (index !== undefined) {
+                this.data.splice(index,0,item);
+            } else {
+                this.data.push(item);
+            }
             this.resort();
             this.length = this.data.length;
             if (!silent) {
                 this.trigger(this.name + ":new", item);
-                this.trigger("change");
             }
             if (item instanceof Model) {
                 item.on("all", this.itemEvt.bind(this, item), this);
@@ -284,7 +297,6 @@ Collection.extend({
                 this.length = this.data.length;
                 if (!silent) {
                     this.trigger(this.name + ":remove", item);
-                    this.trigger("change");
                 }
                 if (item instanceof Model) {
                     item.off("all", null, this);
@@ -355,7 +367,10 @@ Collection.extend({
                     this.sortBy(function(item) {
                         return m_.getValue(item, sortByProp);
                     });
+                } else if (this.sortByFunc) {
+                    this.sort(this.sortByFunc);
                 }
+                if (this.reverseSort) this.data.reverse();
             }
         },
 
@@ -379,7 +394,7 @@ Collection.extend({
                 if (aa < bb || aa && !bb) return -1;
                 return 0;
             });
-            this.trigger("change:data");
+            this.trigger(this.name + ":reorder");
         },
 
         /**
@@ -388,8 +403,9 @@ Collection.extend({
          */
         sort: function(fn) {
             this.data.sort(fn);
-            this.trigger("change:data");
+            this.trigger(this.name + ":reorder");
         },
+
 
         /**
          * @method
@@ -398,6 +414,7 @@ Collection.extend({
         clear: function() {
             this.data = [];
             this.length = 0;
+            this.trigger(this.name + ":cleared");
         },
 
         /**
