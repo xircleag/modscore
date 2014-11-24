@@ -101,6 +101,21 @@ var Collection = Model.extend({
 
     var classDef = m_.Model.getClass("ArrayCollection");
     var collection = new classDef();
+ *
+ * Data can be added using
+
+    collection.add(item);
+    collection.add("hello");
+    collection.data = ["hello", item]; // replaces all previous data, but will not fire add/remove events
+
+ *
+ * Data can be removed using
+
+    collection.remove("hello");
+    collection.remove(item);
+    collection.data = [];
+    collection.clear();
+
  */
 Collection.extend({
     name: "ArrayCollection",
@@ -173,7 +188,7 @@ Collection.extend({
          * Modifies sortByProp
          */
         reverseSort: false,
-
+        emptyIsLow: false,
         sortByFunc: {
             type: "Function"
         }
@@ -216,6 +231,7 @@ Collection.extend({
             }, this);
             this.length = this.data.length;
             this.resort();
+
         },
         updateSortByProp: function() {this.resort();},
         updateSortByFunc: function() {this.resort();},
@@ -265,7 +281,9 @@ Collection.extend({
             } else {
                 this.data.push(item);
             }
-            this.resort();
+            if (!silent) {
+                this.resort();
+            }
             this.length = this.data.length;
             if (!silent) {
                 this.trigger(this.name + ":new", item);
@@ -335,6 +353,11 @@ Collection.extend({
             }
         },
 
+        findWhere: function(obj) {
+            var d= this.data;
+            return m_.findWhere(d, obj);
+        },
+
         /**
          * @method
          * @param {Function} fn - Function to call on each item
@@ -390,10 +413,12 @@ Collection.extend({
             d.sort(function(a,b) {
                 var aa = fn(a);
                 var bb = fn(b);
-                if (aa > bb || bb && !aa) return 1;
+                if (bb && !aa && aa !== 0) return this.emptyIsLow ? -1 : 1;
+                if (aa && !bb && bb !== 0) return this.emptyIsLow ? 1 : -1;
+                if (aa > bb) return 1;
                 if (aa < bb || aa && !bb) return -1;
                 return 0;
-            });
+            }.bind(this));
             this.trigger(this.name + ":reorder");
         },
 
@@ -411,7 +436,7 @@ Collection.extend({
          * @method
          * Remove all data from the collection
          */
-        clear: function() {
+        clear: function(silent) {
             this.data = [];
             this.length = 0;
             this.trigger(this.name + ":cleared");

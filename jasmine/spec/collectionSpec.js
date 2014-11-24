@@ -318,7 +318,7 @@ describe("Collections", function() {
 
 
     it("Should allow setting the entire collection", function() {
-        var newCount = 0, removeCount = 0;
+        var changed = false;
         var Cat = m_.Model.extend({
             name: "Cat",
             properties: {
@@ -337,18 +337,14 @@ describe("Collections", function() {
             scores: [10,20,25]
         });
         cat.on({
-            "item:new": function(item) {
-                newCount++;
-            },
-            "item:remove": function(item) {
-                removeCount++;
+            "change": function(item) {
+                changed = true;
             }
         });
 
         cat.scores = [12,23];
         expect(cat.scores.getData()).toEqual([12,23]);
-        expect(newCount).toEqual(2);
-        expect(removeCount).toEqual(3);
+        expect(changed).toEqual(true);
     });
 
     it("Should maintain sorted collection via sortByProp", function() {
@@ -371,16 +367,17 @@ describe("Collections", function() {
             }
         });
 
-
-
         var cat = new Cat({
-            kittens: [new Cat({age:35, name: "z"}),new Cat({age:25, name: "a"}),new Cat({age:45, name: "m"})]
+            kittens: [new Cat({age:35, name: "z"}),
+                      new Cat({name: "ageless"}),
+                      new Cat({age:25, name: "a"}),
+                      new Cat({age:45, name: "m"})]
         });
-        expect(cat.kittens.map(function(item){return item.age;})).toEqual([25,35,45]);
+        expect(cat.kittens.map(function(item){return item.age;})).toEqual([25,35,45,undefined]);
         cat.kittens.add(new Cat({age:3, name: "n"}));
-        expect(cat.kittens.map(function(item){return item.age;})).toEqual([3,25,35,45]);
+        expect(cat.kittens.map(function(item){return item.age;})).toEqual([3,25,35,45,undefined]);
         cat.kittens.sortByProp = "name";
-        expect(cat.kittens.map(function(item){return item.name;})).toEqual(["a","m","n","z"]);
+        expect(cat.kittens.map(function(item){return item.name;})).toEqual(["a","ageless","m","n","z"]);
     });
 
     it("Should maintain reverse sorted collection via sortByProp", function() {
@@ -407,13 +404,52 @@ describe("Collections", function() {
 
 
         var cat = new Cat({
-            kittens: [new Cat({age:35, name: "z"}),new Cat({age:25, name: "a"}),new Cat({age:45, name: "m"})]
+            kittens: [new Cat({age:35, name: "z"}),
+                      new Cat({name: "ageless"}),
+                      new Cat({age:25, name: "a"}),
+                      new Cat({age:45, name: "m"})]
         });
-        expect(cat.kittens.map(function(item){return item.age;})).toEqual([25,35,45].reverse());
+        expect(cat.kittens.map(function(item){return item.age;})).toEqual([25,35,45,undefined].reverse());
         cat.kittens.add(new Cat({age:3, name: "n"}));
-        expect(cat.kittens.map(function(item){return item.age;})).toEqual([3,25,35,45].reverse());
+        expect(cat.kittens.map(function(item){return item.age;})).toEqual([3,25,35,45,undefined].reverse());
         cat.kittens.sortByProp = "name";
-        expect(cat.kittens.map(function(item){return item.name;})).toEqual(["a","m","n","z"].reverse());
+        expect(cat.kittens.map(function(item){return item.name;})).toEqual(["a","ageless","m","n","z"].reverse());
+    });
+
+    it("sortByProp shoul drespect emptyIsLow property", function() {
+        var newCount = 0, removeCount = 0;
+        var Cat = m_.Model.extend({
+            name: "Cat",
+            properties: {
+                name: {
+                    type: "string"
+                },
+                age: {
+                    type: "number"
+                },
+                kittens: {
+                    type: "ArrayCollection",
+                    params: {
+                        sortByProp: "age",
+                        emptyIsLow: true
+                    }
+                }
+            }
+        });
+
+
+
+        var cat = new Cat({
+            kittens: [new Cat({age:35, name: "z"}),
+                      new Cat({name: "ageless"}),
+                      new Cat({age:25, name: "a"}),
+                      new Cat({age:45, name: "m"})]
+        });
+        expect(cat.kittens.map(function(item){return item.age;})).toEqual([undefined,25,35,45]);
+        cat.kittens.add(new Cat({age:3, name: "n"}));
+        expect(cat.kittens.map(function(item){return item.age;})).toEqual([undefined,3,25,35,45]);
+        cat.kittens.sortByProp = "name";
+        expect(cat.kittens.map(function(item){return item.name;})).toEqual(["a","ageless","m","n","z"]);
     });
 
 
