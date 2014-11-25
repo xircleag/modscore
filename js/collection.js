@@ -281,7 +281,7 @@ Collection.extend({
             } else {
                 this.data.push(item);
             }
-            if (!silent) {
+            if (!silent && index === undefined) {
                 this.resort();
             }
             this.length = this.data.length;
@@ -379,11 +379,9 @@ Collection.extend({
 
         /**
          * @method
-         * @private
          * Resorts using the sortByProp
          */
          resort: {
-            private: true,
             method: function() {
                 var sortByProp = this.sortByProp;
                 if (sortByProp) {
