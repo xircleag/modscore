@@ -843,7 +843,7 @@
             type = def.type ? Model.getClass(def.type) : null;
             if (type && type.prototype instanceof Model.getClass("Collection")) {
                 if (this.adjustCollection(inValue, name)) {
-                    this.trigger("set");
+                    this[name].trigger("set");
                     return;
                 }
             }
