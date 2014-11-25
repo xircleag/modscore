@@ -509,4 +509,15 @@ describe("Collections", function() {
         expect(c.length).toEqual(0);
         expect(c.at(0)).toBe(undefined);
     });
+
+    it("Should destroy the data", function() {
+        c = new Collection({
+            data: [new Person({firstName: "Fred"}), new Person({lastName: "Flinstone"})]
+        });
+        var p1 = c.at(0);
+        var p2 = c.at(1);
+        c.destroy();
+        expect(p1.__isDestroyed).toBe(true);
+        expect(p2.__isDestroyed).toBe(true);
+    });
 });

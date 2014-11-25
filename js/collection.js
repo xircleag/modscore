@@ -444,17 +444,31 @@ Collection.extend({
 
         /**
          * @method
-         * Destroy the collection and all of its data
+         * Much like clear, but insures memory is cleaned up.
+         * Use clear if your items are not Model instances, or
+         * if you will continue to need them.
          */
-        destroy: function() {
+        destroyItems: function() {
             // destroy may side effect modifying this.data, so iterate over a copy
-            var d = this.data.concat([]);
-            d.forEach(function(item) {
+            this.getData().forEach(function(item) {
                 if (item instanceof Model) {
                     item.destroy();
                 }
             });
+            this.data = [];
+        },
+
+        /**
+         * @method
+         * Destroy the collection and all of its data
+         */
+        destroy: function() {
+            this.destroyItems();
             this.$super();
+        },
+
+        toString: function() {
+            return this.$super().replace(/\]/, " length="+this.length + "]");
         }
     }
 });
