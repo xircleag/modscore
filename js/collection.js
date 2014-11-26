@@ -345,7 +345,8 @@ Collection.extend({
             });
 
          */
-        find: function(fn) {
+        find: function(fn, context) {
+            if (context) fn = fn.bind(context);
             var d = this.data,
                 length = d.length;
             for (var i = 0; i < length; i++) {
