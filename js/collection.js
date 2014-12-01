@@ -468,6 +468,7 @@ Collection.extend({
                 }
             }, this);
             this.length = inArray.length;
+            this.resort();
             if (!silent) {
                 this.trigger(this.name + ":set");
             }
