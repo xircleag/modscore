@@ -392,7 +392,7 @@ Collection.extend({
                 } else if (this.sortByFunc) {
                     this.sort(this.sortByFunc);
                 }
-                if (this.reverseSort) this.data.reverse();
+                if ((sortByProp || this.sortByFunc) && this.reverseSort) this.data.reverse();
             }
         },
 
@@ -430,6 +430,10 @@ Collection.extend({
             this.trigger(this.name + ":reorder");
         },
 
+        /**
+         * @event item:cleared
+         * Fired whenever clear() is called and has finished
+         */
 
         /**
          * @method
@@ -440,6 +444,34 @@ Collection.extend({
             this.length = 0;
             this.trigger(this.name + ":cleared");
         },
+
+        /**
+         * @event item:set
+         * Called whenever the entire dataset has been replaced with a new dataset.
+         * Triggered via this.myCollection = [data...];
+         */
+
+        /**
+         * @method
+         * @protected
+         * Replaces data with data copied from the array.
+         * Recommend using this.myCollection = [data...] instead of setData()
+         */
+         setData: function(inArray, silent) {
+            // A technique for modifying the existing data object without
+            // firing off any setters (infinite loop)
+            this.data.splice.apply(this.data, [0,this.length].concat(inArray))
+            var itemEvt = this.itemEvt;
+            this.each(function(item) {
+                if (item instanceof m_.Model) {
+                    item.on("all", itemEvt.bind(this, item), this);
+                }
+            }, this);
+            this.length = inArray.length;
+            if (!silent) {
+                this.trigger(this.name + ":set");
+            }
+         },
 
         /**
          * @method

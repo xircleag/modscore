@@ -842,8 +842,7 @@
         } else {
             type = def.type ? Model.getClass(def.type) : null;
             if (type && type.prototype instanceof Model.getClass("Collection")) {
-                if (this.adjustCollection(inValue, name)) {
-                    this[name].trigger("set");
+                if (this.adjustCollection(inValue, name, silent)) {
                     return;
                 }
             }
@@ -1083,13 +1082,10 @@
         if (result && !isNaN(result.getTime())) return result;
     };
 
-    Model.prototype.adjustCollection = function(inValue, inName) {
+    Model.prototype.adjustCollection = function(inValue, inName, silent) {
         if (m_.isArray(inValue)) {
             var collection = this[inName];
-            collection.each(function(item) {collection.remove(item, true);});
-            inValue.forEach(function(item, index) {
-                collection.add(item, index != inValue.length-1);
-            });
+            collection.setData(inValue, silent);
             return true;
         } else if (inValue && inValue instanceof Model.getClass("Collection")) {
             inValue.on("all", this.collectionEvent, this);
@@ -1102,6 +1098,10 @@
      * @method init
      */
     Model.prototype.init = function() {
+    };
+
+    Model.prototype.isInitializing = function() {
+        return this.__values.__notinitialized;
     };
 
     /**
