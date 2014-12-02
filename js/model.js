@@ -375,6 +375,20 @@
     * - **silent**: A property that does not trigger any events on changing.  Used for
     * performance, and to avoid repeatedly triggering "all" subscriptions for internal properties
 
+    * - **silentInit**: A property that lets you change the default behavior when initializing a property of NOT
+    * firing events and updaters.  Override this with:
+
+        var Animal = m_.Model.extend({
+            name: "Animal",
+            properties: {
+                age: {
+                    type: "integer",
+                    defaultValue: 1,
+                    silentInit: false // now fires events before object has finished initializing
+                }
+            }
+        });
+
     * ### Step 6: Add methods to refine property behaviors
     *
     * - **Adjuster**: You can add an adjuster method for your property to adjust the value being set.
@@ -696,7 +710,7 @@
             m_.each(defs, function(def,name) {
                 var type = Model.getClass(def.type);
                 if (type && type.prototype instanceof Model.getClass("Collection")) {
-                    this[name] = new type(def.params);
+                    this[name] = new type(m_.extend({owner:this},def.params));
                     setupEvents.call(this, this[name], def);
                     if (name in params) this[name] = params[name];
                 } else if (this[name] == undefined && def.create && type && type.prototype instanceof Model) {
@@ -816,7 +830,7 @@
         if (inValue instanceof SilentValue) {
             silent = true;
             inValue = inValue.value;
-        } else if (values.__notinitialized) {
+        } else if (values.__notinitialized && def.silentInit !== false) {
             silent = true;
         }
 
@@ -1088,7 +1102,7 @@
             collection.setData(inValue, silent);
             return true;
         } else if (inValue && inValue instanceof Model.getClass("Collection")) {
-            inValue.on("all", this.collectionEvent, this);
+            inValue.on("all", this.collectionEvent.bind(this,inValue), this);
             return false;
         }
     };
@@ -1119,7 +1133,19 @@
     };
 
     Model.prototype.collectionEvent = function() {
-        this.trigger.apply(this, arguments);
+        var args = Array.prototype.slice.call(arguments);
+        var type = Model.getClass("Collection");
+        if (type && args[0] instanceof Model.getClass("Collection")) {
+            var collection = args.shift();
+            if (collection.name) {
+                args[0] = collection.name + ":" + args[0];
+            }
+            if (collection.evtModifier) {
+                collection.evtModifier(args);
+            }
+        }
+
+        this.trigger.apply(this, args);
     };
 
     Model.prototype.toString = function() {
