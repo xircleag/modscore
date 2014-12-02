@@ -688,11 +688,16 @@
             this.__values.__processConstructorParams = true;
             m_.each(defs, function(def, name) {
                 var type = Model.getClass(def.type);
+                // If the type represents a model, and def.create says we careate an instance
+                // of that model, then either the value is an Object (parameters for creating
+                // that model) or a Model (to be used as the value, skipping create).
                 if (!type || !(type.prototype instanceof Model.getClass("Collection"))) {
-                    if (name in params) {
-                        this[name] = params[name];
-                    } else if (def.type.indexOf("[") === 0) {
-                        this[name] = [];
+                    if (!def.create || params[name] instanceof Model || !type || !(type.prototype instanceof Model)) {
+                        if (name in params) {
+                            this[name] = params[name];
+                        } else if (def.type.indexOf("[") === 0) {
+                            this[name] = [];
+                        }
                     }
                 }
             }, this);
@@ -713,7 +718,7 @@
                     this[name] = new type(m_.extend({owner:this},def.params));
                     setupEvents.call(this, this[name], def);
                     if (name in params) this[name] = params[name];
-                } else if (this[name] == undefined && def.create && type && type.prototype instanceof Model) {
+                } else if (!(params[name] instanceof Model) && def.create && type && type.prototype instanceof Model) {
                     var localParams = {};
                     m_.each(def.params, function(value, name) {
                         if (String(value).indexOf("this.") == 0) {
@@ -722,6 +727,7 @@
                             localParams[name] = value;
                         }
                     }, this);
+                    if (m_.isObject(params[name])) m_.extend(localParams, params[name]);
                     this[name] = new type(localParams);
                     setupEvents.call(this, this[name], def);
                 }

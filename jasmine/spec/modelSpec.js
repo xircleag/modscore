@@ -1449,4 +1449,108 @@ describe("Model", function() {
         });
 
     });
+
+    describe("Test passing parameters to subcomponents", function() {
+
+        it("Should pass the parameters into the create call", function() {
+            var Person = m_.Model.extend({
+                name:"Person",
+                properties: {
+                    firstName: {
+                        type: "string",
+                        defaultValue: "Fred"
+                    },
+                    lastName: {
+                        type: "string",
+                        defaultValue: "Flinstone"
+                    }
+                }
+            });
+            var Child = Person.extend({
+                name: "Child",
+                properties: {
+                    mother: {
+                        type: "Person",
+                        create: true
+                    },
+                    father: {
+                        type: "Person",
+                        create: true
+                    }
+                }
+            });
+
+            var p = new Child();
+            expect(p.mother.firstName).toEqual("Fred");
+            expect(p.mother.lastName).toEqual("Flinstone");
+
+            var p = new Child({
+                mother: {
+                    firstName: "Marge",
+                    lastName: "Simpson"
+                },
+                father: {
+                    firstName: "Homer",
+                    lastName: "Simpson"
+                }
+            });
+            expect(p.mother.firstName).toEqual("Marge");
+            expect(p.father.firstName).toEqual("Homer");
+        });
+
+        it("Should respect and override default parameters", function() {
+            var Person = m_.Model.extend({
+                name:"Person",
+                properties: {
+                    firstName: {
+                        type: "string",
+                        defaultValue: "Fred"
+                    },
+                    lastName: {
+                        type: "string",
+                        defaultValue: "Flinstone"
+                    }
+                }
+            });
+            var Child = Person.extend({
+                name: "Child",
+                properties: {
+                    mother: {
+                        type: "Person",
+                        create: true,
+                        params: {
+                            firstName: "Doh",
+                            lastName: "Ray"
+                        }
+                    },
+                    father: {
+                        type: "Person",
+                        create: true,
+                        params: {
+                            firstName: "Me"
+                        }
+                    }
+                }
+            });
+
+            var p = new Child();
+            expect(p.mother.firstName).toEqual("Doh");
+            expect(p.mother.lastName).toEqual("Ray");
+            expect(p.father.firstName).toEqual("Me");
+            expect(p.father.lastName).toEqual("Flinstone");
+
+            var p = new Child({
+                mother: {
+                    firstName: "Marge"
+                },
+                father: {
+                    firstName: "Homer"
+                }
+            });
+            expect(p.mother.firstName).toEqual("Marge");
+            expect(p.mother.lastName).toEqual("Ray");
+            expect(p.father.firstName).toEqual("Homer");
+            expect(p.father.lastName).toEqual("Flinstone");
+        });
+    });
 });

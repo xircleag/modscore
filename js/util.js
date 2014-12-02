@@ -369,7 +369,11 @@
   // WARNING: Will return functions if they are set in the constructor instead of set in the prototype.
   _.keys = function(obj) {
     if (!_.isObject(obj)) return [];
-    if (nativeKeys) return nativeKeys(obj);
+    if (nativeKeys) {
+      var nkeys =  nativeKeys(obj);
+      if (nkeys.indexOf("constructor") != -1) nkeys.splice(nkeys.indexOf("constructor"),1);
+      return nkeys;
+    }
     var keys = [];
     for (var key in obj) if (_.has(obj, key)) keys.push(key);
     return keys;
