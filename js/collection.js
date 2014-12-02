@@ -18,12 +18,12 @@ var Collection = Model.extend({
          */
 
          /**
-          * @property {string} [name=item] - Name of the collection; name will be used when the collection
-          * generates events about its items.
+          * @property {string} [name=item] - Name of the collection; used by parent component
+          * to distinguish events from this collection from other collections it manages.
           */
         name: {
             type: "string",
-            defaultValue: "item"
+            defaultValue: ""
         }
     }
 });
@@ -55,10 +55,10 @@ var Collection = Model.extend({
     p.legs.add("extra leg");
     p.legs.remove("left");
     p.on({
-        "item:new": function(item) {
+        "add": function(item) {
             alert("My new leg is: " + item);
         },
-        "item:remove": function(item) {
+        "remove": function(item) {
             alert("I've lost my " + item + " leg!");
         }
     });
@@ -85,7 +85,7 @@ var Collection = Model.extend({
         legs: ["left",  "right"]
     });
     p.on({
-        "leg:new": function(item) {
+        "add": function(item) {
             alert("My new leg is: " + item);
         },
         "leg:remove": function(item) {
@@ -128,7 +128,8 @@ Collection.extend({
          */
         data: {
             type: "[any]",
-            private: true
+            private: true,
+            silent: true // see "set" event
         },
 
         /**
@@ -137,7 +138,8 @@ Collection.extend({
          */
         length: {
             type: "number",
-            privateSetter: true
+            privateSetter: true,
+            silent: true
         },
 
         /**
@@ -191,6 +193,20 @@ Collection.extend({
         emptyIsLow: false,
         sortByFunc: {
             type: "Function"
+        },
+
+
+        /**
+         * @property
+         * @readonly
+         * If a collection was created using {create:true} in the property def,
+         * then the owner is the component that this was created for.
+         * Used among other things for detecting that the collection was the one
+         * created just for some component, vs being passed in as a parameter.
+         */
+        owner: {
+            type: "any",
+            privateSetter: true
         }
     },
     methods: {
@@ -207,11 +223,9 @@ Collection.extend({
                 if (evtName == "destroy") return this.remove(item); // remove it and fire removal events instead
                 if (evtName == "new") return; // already fired
                 var args = Array.prototype.slice.call(arguments);
-                args[0] = this.name + ":" + evtName;
+                //args[0] = this.name + ":" + evtName;
+                args[0] = "item:" + evtName;
                 args[1] = item;
-                if (this.evtModifier) {
-                    this.evtModifier(args);
-                }
                 this.trigger.apply(this, args);
             }
         },
@@ -230,7 +244,7 @@ Collection.extend({
                 }
             }, this);
             this.length = this.data.length;
-            this.resort();
+            this.resort(true);
 
         },
         updateSortByProp: function() {this.resort();},
@@ -263,15 +277,14 @@ Collection.extend({
         },
 
         /**
-         * @event item:new
+         * @event add
          * @param {Mixed} item - Item that was added
-         * Note that if you provide an alternate name for the collection, it will be altName:new
          */
 
         /**
          * @method
          * @param {Mixed} item - Object or value to add
-         * @param {boolean} [silent=false] - Do not trigger "new" events
+         * @param {boolean} [silent=false] - Do not trigger "add" events
          * @param {number} [index=last] - Use this to insert rather than append
          * Add an item to the collection and trigger events to anyone watching the collection
          */
@@ -282,11 +295,12 @@ Collection.extend({
                 this.data.push(item);
             }
             if (!silent && index === undefined) {
-                this.resort();
+                this.resort(true);
             }
             this.length = this.data.length;
             if (!silent) {
-                this.trigger(this.name + ":new", item);
+                this.trigger("add", item);
+                this.trigger("change", item);
             }
             if (item instanceof Model) {
                 item.on("all", this.itemEvt.bind(this, item), this);
@@ -294,9 +308,8 @@ Collection.extend({
         },
 
         /**
-         * @event item:remove
+         * @event remove
          * @param {Mixed} item - Item that was removed
-         * Note that if you provide an alternate name for the collection, it will be altName:remove
          */
 
 
@@ -314,7 +327,8 @@ Collection.extend({
                 d.splice(index,1);
                 this.length = this.data.length;
                 if (!silent) {
-                    this.trigger(this.name + ":remove", item);
+                    this.trigger("remove", item);
+                    this.trigger("change", item);
                 }
                 if (item instanceof Model) {
                     item.off("all", null, this);
@@ -383,7 +397,7 @@ Collection.extend({
          * Resorts using the sortByProp
          */
          resort: {
-            method: function() {
+            method: function(silent) {
                 var sortByProp = this.sortByProp;
                 if (sortByProp) {
                     this.sortBy(function(item) {
@@ -393,8 +407,17 @@ Collection.extend({
                     this.sort(this.sortByFunc);
                 }
                 if ((sortByProp || this.sortByFunc) && this.reverseSort) this.data.reverse();
+                if (!silent) {
+                    this.trigger("reorder");
+                    this.trigger("change");
+                }
             }
         },
+
+        /**
+          * @event reorder
+          * Collection sequence has changed
+          */
 
         /**
          * Simplified sort method: give it a function to get the value, rather than to do the comparison.
@@ -418,7 +441,6 @@ Collection.extend({
                 if (aa < bb || aa && !bb) return -1;
                 return 0;
             }.bind(this));
-            this.trigger(this.name + ":reorder");
         },
 
         /**
@@ -427,11 +449,12 @@ Collection.extend({
          */
         sort: function(fn) {
             this.data.sort(fn);
-            this.trigger(this.name + ":reorder");
+            this.trigger("reorder");
+            this.trigger("change");
         },
 
         /**
-         * @event item:cleared
+         * @event cleared
          * Fired whenever clear() is called and has finished
          */
 
@@ -442,11 +465,12 @@ Collection.extend({
         clear: function(silent) {
             this.data = [];
             this.length = 0;
-            this.trigger(this.name + ":cleared");
+            this.trigger("cleared");
+            this.trigger("change");
         },
 
         /**
-         * @event item:set
+         * @event set
          * Called whenever the entire dataset has been replaced with a new dataset.
          * Triggered via this.myCollection = [data...];
          */
@@ -468,9 +492,10 @@ Collection.extend({
                 }
             }, this);
             this.length = inArray.length;
-            this.resort();
+            this.resort(true);
             if (!silent) {
-                this.trigger(this.name + ":set");
+                this.trigger("set");
+                this.trigger("change");
             }
          },
 
