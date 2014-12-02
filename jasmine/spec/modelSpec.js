@@ -1552,5 +1552,124 @@ describe("Model", function() {
             expect(p.father.firstName).toEqual("Homer");
             expect(p.father.lastName).toEqual("Flinstone");
         });
+
+        it("Should work to n depth", function() {
+            var Person = m_.Model.extend({
+                name:"Person",
+                properties: {
+                    firstName: {
+                        type: "string",
+                        defaultValue: "Fred"
+                    },
+                    lastName: {
+                        type: "string",
+                        defaultValue: "Flinstone"
+                    }
+                }
+            });
+            var Child = Person.extend({
+                name: "Child",
+                properties: {
+                    mother: {
+                        type: "Person",
+                        create: true
+                    },
+                    father: {
+                        type: "Person",
+                        create: true
+                    }
+                }
+            });
+
+            var Brother = Child.extend({
+                name: "Brother",
+                properties: {
+                    sister: {
+                        type: "Child",
+                        create: true
+                    }
+                }
+            });
+
+            var p = new Brother({
+                sister: {
+                    mother: {
+                        firstName: "Wilma",
+                        lastName: "The Conquereror"
+                    },
+                    firstName: "Sis"
+                }
+            });
+            expect(p.sister.mother.firstName).toEqual("Wilma");
+            expect(p.sister.mother.lastName).toEqual("The Conquereror");
+            expect(p.sister.firstName).toEqual("Sis");
+            expect(p.sister.lastName).toEqual("Flinstone");
+            expect(p.sister.father.firstName).toEqual("Fred");
+            var p = new Child();
+            expect(p.mother.firstName).toEqual("Fred");
+            expect(p.mother.lastName).toEqual("Flinstone");
+
+            var p = new Child({
+                mother: {
+                    firstName: "Marge",
+                    lastName: "Simpson"
+                },
+                father: {
+                    firstName: "Homer",
+                    lastName: "Simpson"
+                }
+            });
+            expect(p.mother.firstName).toEqual("Marge");
+            expect(p.father.firstName).toEqual("Homer");
+        });
+
+        it("Change the class of the subcomponent", function() {
+            var Person = m_.Model.extend({
+                name:"Person",
+                properties: {
+                    firstName: {
+                        type: "string",
+                        defaultValue: "Fred"
+                    },
+                    lastName: {
+                        type: "string",
+                        defaultValue: "Flinstone"
+                    }
+                }
+            });
+            var Child = Person.extend({
+                name: "Child",
+                properties: {
+                    mother: {
+                        type: "Person",
+                        create: true
+                    },
+                    father: {
+                        type: "Person",
+                        create: true
+                    }
+                }
+            });
+
+            var p = new Child();
+            expect(p.mother instanceof Child).toEqual(false);
+            expect(p.mother instanceof Person).toEqual(true);
+
+
+            var p = new Child({
+                mother: {
+                    firstName: "Marge",
+                    lastName: "Simpson"
+                },
+                father: {
+                    $class: Child,
+                    firstName: "Homer",
+                    lastName: "Simpson"
+                }
+            });
+
+            expect(p.mother instanceof Child).toEqual(false);
+            expect(p.father instanceof Child).toEqual(true);
+        });
     });
 });
