@@ -117,7 +117,11 @@ module.exports = function(grunt) {
 			    	transform: ["istanbulify"]
 			    }
 			},
-			options: {}
+			options: {
+				browserifyOptions: {
+			         debug: true
+			    }
+			}
 		},
 		uglify: {
 			options: {

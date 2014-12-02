@@ -358,6 +358,19 @@ Will throw an error any time you set the value of that property to null, undefin
         > 90
 - **silent**: A property that does not trigger any events on changing.  Used for
 performance, and to avoid repeatedly triggering "all" subscriptions for internal properties
+- **silentInit**: A property that lets you change the default behavior when initializing a property of NOT
+firing events and updaters.  Override this with:
+
+        var Animal = m_.Model.extend({
+            name: "Animal",
+            properties: {
+                age: {
+                    type: "integer",
+                    defaultValue: 1,
+                    silentInit: false // now fires events before object has finished initializing
+                }
+            }
+        });
 ### Step 6: Add methods to refine property behaviors
 
 - **Adjuster**: You can add an adjuster method for your property to adjust the value being set.

@@ -46,10 +46,10 @@ describe("Collections", function() {
 
     it("Should fire events on add/remove", function() {
         var added, removed;
-        c.once("item:new", function(item) {
+        c.once("add", function(item) {
             added = item;
         });
-        c.once("item:remove", function(item) {
+        c.once("remove", function(item) {
             removed = item;
         });
 
@@ -162,7 +162,7 @@ describe("Collections", function() {
     });
 
     it("Should forward item events", function() {
-        var new1 = false, change1 = false, change2 = false;
+        var new1 = false, added1 = false, change1 = false, change2 = false;
         var Cat = m_.Model.extend({
             name: "Cat",
             properties: {
@@ -182,17 +182,22 @@ describe("Collections", function() {
 
         var cat = new Cat();
         cat.on({
-            "kitten:new": function(item) {
+            "kitten:add": function(item) {
                 new1 = true;
                 expect(item).toBe(kitten);
             },
-            "kitten:change": function(item, fieldName, newValue, oldValue) {
+            "kitten:change": function(item) {
+                added1 = true;
+                expect(item).toBe(kitten);
+
+            },
+            "kitten:item:change": function(item, fieldName, newValue, oldValue) {
                 change1 = true;
                 expect(item).toBe(kitten);
                 expect(fieldName).toEqual("age");
                 expect(newValue).toEqual(55);
             },
-            "kitten:change:age": function(item, newValue, oldValue) {
+            "kitten:item:change:age": function(item, newValue, oldValue) {
                 change2 = true;
                 expect(item).toBe(kitten);
                 expect(newValue).toEqual(55);
@@ -200,9 +205,11 @@ describe("Collections", function() {
         });
         var kitten = new Cat();
         cat.littleCats.add(kitten);
+        expect(new1).toEqual(true);
+        expect(added1).toEqual(true);
 
         kitten.age = 55;
-        expect(new1).toEqual(true);
+
         expect(change1).toEqual(true);
         expect(change2).toEqual(true);
 
@@ -227,7 +234,7 @@ describe("Collections", function() {
                     params: {
                         name: "kitten",
                         evtModifier: function(args) {
-                            args[0] = args[0].replace(/^kitten:/, "");
+                            args[0] = args[0].replace(/^kitten:item:/, "");
                         }
                     }
                 }
@@ -270,11 +277,11 @@ describe("Collections", function() {
             scores: [10,20,25]
         });
         cat.on({
-            "item:new": function(item) {
+            "add": function(item) {
                 new1 = true;
                 expect(item).toEqual(35);
             },
-            "item:remove": function(item) {
+            "remove": function(item) {
                 remove1 = true;
                 expect(item).toEqual(35);
             }
@@ -301,7 +308,7 @@ describe("Collections", function() {
                 scores: {
                     type: "ArrayCollection",
                     events: {
-                        "item:new": function(item) {
+                        "add": function(item) {
                             newItem = item;
                         }
                     }
