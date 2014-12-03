@@ -417,6 +417,30 @@
         alert(p.mother.firstName); // "Mom2" // value from constructor
         alert(p.father.firstName); // "Dad"  // value from params
 
+    * - **events**: When creating a component (create:true), map events from
+    * the created object to functions or to methods of this object.
+
+        var Child = Person.extend({
+            name: "Child",
+            properties: {
+                mother: {
+                    type: "Person",
+                    create: true,
+                    params: {
+                        firstName: "Mom"
+                    },
+                    events: {
+                        "change:firstName": function(newValue,oldValue) {alert(newValue);},
+                        "change:lastName": "this.handleMotherLastNameChange"
+                    }
+                }
+            }
+        });
+
+    * Note the use of "this.functionName"; if we were to use this.functionName without quotes,
+    * you'd be accessing this at a place where its definition is ambiguous.  Quoting them tells the
+    * class system to map the event to each instance of the class you are defining.
+
     * - **required**: A boolean indicating if the value is required.  Will cause error to be thrown any time you create an object without that property.
     * Will throw an error any time you set the value of that property to null, undefined or "".
 
@@ -1226,6 +1250,7 @@
      */
     Model.prototype.destroy = function() {
         this.__isDestroyed = true;
+        this.owner = null;
         this.trigger("destroy");
         this.off();
     };
