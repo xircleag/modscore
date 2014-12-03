@@ -793,7 +793,7 @@
 
             this.__isDestroyed = false;
             this._events = {};
-            this._subscriptions = {};
+            this._subscriptions = [];
 
 
             /* For each property passed in via the constructor, set the appropriate private/public value */
@@ -871,8 +871,8 @@
 
     // Enable events on all Model instances/sublcasses
     m_.extend(Model.prototype, Events);
-    Model.prototype._events = {};
-    Model.prototype._subscriptions = {};
+    Model.prototype._events = null;
+    Model.prototype._subscriptions = null;
 
     function setupEvents(obj, def) {
         if (def.events) {
@@ -1252,7 +1252,12 @@
         this.__isDestroyed = true;
         this.owner = null;
         this.trigger("destroy");
-        this.off();
+        //this.off();
+        this._events = null;
+        this._subscriptions.forEach(function(item) {
+            item.off(null,null,this);
+        }, this);
+        this._subscriptions = null;
     };
 
     Model.prototype.collectionEvent = function() {
@@ -1273,6 +1278,11 @@
 
     Model.prototype.toString = function() {
         return "[" + this.internalId + "]";
+    };
+
+    Model.prototype.on = function(name, f, context) {
+        if (context instanceof Model) context._subscriptions.push(this);
+        Events.on.apply(this, arguments);
     };
 
     /**
@@ -1639,7 +1649,7 @@
                 type: "object"
             },
             _subscriptions: {
-                type: "object"
+                type: "[object]"
             },
             internalId: {
                 type: "string"

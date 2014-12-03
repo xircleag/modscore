@@ -839,6 +839,42 @@ describe("Model", function() {
             expect(eventTriggeredOn).toEqual(p);
         });
 
+        it("If A is destroyed, it should no longer listen to events from B", function() {
+            var Person = m_.Model.extend({name:"Person", properties:genericPersonDef});
+            var a = new Person();
+            var b = new Person();
+            var called = false;
+            b.on("change:firstName", function() {
+                called = true;
+            }, a);
+
+            // Verify the event is setup correctly
+            b.firstName = "Doh!";
+            expect(called).toEqual(true);
+            a.destroy();
+
+            // Question: Does b._events still have a pointer to A that prevents it from being garbage collected?
+            expect(b._events).toEqual({});
+        });
+
+        it("If A is destroyed, B should no longer listen to events from A", function() {
+            var Person = m_.Model.extend({name:"Person", properties:genericPersonDef});
+            var a = new Person();
+            var b = new Person();
+            var called = false;
+            b.on("change:firstName", function() {
+                called = true;
+            }, a);
+
+            // Verify the event is setup correctly
+            b.firstName = "Doh!";
+            expect(called).toEqual(true);
+            a.destroy();
+
+            // Question: Does b._events still have a pointer to A that prevents it from being garbage collected?
+            expect(a._events).toEqual(null);
+
+        });
     });
 
 
