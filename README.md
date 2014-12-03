@@ -318,6 +318,109 @@ this is done using a JS Object with the *method* property containing your functi
                     type: "Date"
                 }
             }
+- **create**: If **type** specifies a Model class, setting create to true, tells
+the class to always create an instance of this class when instantiating itself:
+
+        var Child = Person.extend({
+            name: "Child",
+            properties: {
+                mother: {
+                    type: "Person",
+                    create: true
+                },
+                father: {
+                    type: "Person",
+                    create: true
+                }
+            }
+        });
+        var p = new Child();
+
+        // The mother object was created automatically, firstName will be whatever
+        // default value was specified
+        alert(p.mother.firstName);
+If you provide a suitable instance of the right type, then create is ignored;
+this example uses the specified mother and creates a new father.
+
+        var p = new Child({
+            mother: new Person({firstName: "Mom"})
+        });
+        alert(p.mother.firstName); // "Mom"
+        alert(p.father.firstName); // Default value
+Note that this class can be overridden using the special *$class* parameter
+
+        var p = new Child({
+            mother: {
+                $class: Dog
+            },
+            father: {
+                $class: Cat
+            }
+        });
+
+        alert(p instanceof Dog); // false
+        alert(p.mother instanceof Dog); // true
+        alert(p.father instanceof Dog); // false
+        alert(p.father instanceof Cat); // true
+This technique can be used to replace one class with a different implementation of the same
+capabilities/APIs (typically a subclass of the original class that provides some custom behaviors)
+- **params**: If create is true, params lets you specify default properties to pass
+to the child component when its created
+
+        var Child = Person.extend({
+            name: "Child",
+            properties: {
+                mother: {
+                    type: "Person",
+                    create: true,
+                    params: {
+                        firstName: "Mom"
+                    }
+                },
+                father: {
+                    type: "Person",
+                    create: true,
+                    params: {
+                        firstName: "Dad"
+                    }
+                }
+            }
+        });
+        var p = new Child();
+        alert(p.mother.firstName); // "Mom"
+        alert(p.mother.lastName); // Default value
+Note that you can pass properties to these subcomponents in the constructor as well:
+
+        var p = new Child({
+            mother: {
+                firstName: "Mom2",
+                lastName: "Saruman"
+            }
+        });
+        alert(p.mother.firstName); // "Mom2" // value from constructor
+        alert(p.father.firstName); // "Dad"  // value from params
+- **events**: When creating a component (create:true), map events from
+the created object to functions or to methods of this object.
+
+        var Child = Person.extend({
+            name: "Child",
+            properties: {
+                mother: {
+                    type: "Person",
+                    create: true,
+                    params: {
+                        firstName: "Mom"
+                    },
+                    events: {
+                        "change:firstName": function(newValue,oldValue) {alert(newValue);},
+                        "change:lastName": "this.handleMotherLastNameChange"
+                    }
+                }
+            }
+        });
+Note the use of "this.functionName"; if we were to use this.functionName without quotes,
+you'd be accessing this at a place where its definition is ambiguous.  Quoting them tells the
+class system to map the event to each instance of the class you are defining.
 - **required**: A boolean indicating if the value is required.  Will cause error to be thrown any time you create an object without that property.
 Will throw an error any time you set the value of that property to null, undefined or "".
 
@@ -605,3 +708,4 @@ in a new function that controls if its executed, and what its parameters are
                 if (alive) originalFunc(arg1,arg2);
             });
         });
+
