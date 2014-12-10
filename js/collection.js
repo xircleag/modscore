@@ -117,7 +117,7 @@ var Collection = Model.extend({
     collection.clear();
 
  */
-Collection.extend({
+module.exports = Collection.extend({
     name: "ArrayCollection",
     properties: {
 

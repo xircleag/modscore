@@ -1,8 +1,7 @@
 var m_ = require("./util.js");
 m_.Events = require("./events.js");
 m_.Model = require("./model.js");
-require("./collection.js");
-
+m_.Collection = require("./collection.js");
 
 /* Usage if directly adding the output of browserify in a script tag:
  * m_.Model

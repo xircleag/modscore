@@ -1,6 +1,6 @@
 
 describe("Collections", function() {
-    var Collection = m_.Model.getClass("ArrayCollection");
+    var Collection = m_.Collection;
     var Person = m_.Model.extend({
         name:"Person",
         properties: {
@@ -26,6 +26,10 @@ describe("Collections", function() {
         c = new Collection({
             data: [new Person({firstName: "Fred"}), new Person({lastName: "Flinstone"})]
         });
+    });
+
+    it("Should properly expose collections", function() {
+        expect(m_.Model.getClass("ArrayCollection")).toEqual(m_.Collection);
     });
 
     it("Should store a collection", function() {
