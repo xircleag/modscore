@@ -1260,7 +1260,7 @@
                 item.off(null,null,this);
             }, this);
             this._subscriptions = null;
-        } catch(){}
+        } catch(e){}
         disablePrivateLock = false;
     };
 
