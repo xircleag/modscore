@@ -1249,15 +1249,19 @@
      * Destroying an object should remove all listeners it has registered on other objects as well.
      */
     Model.prototype.destroy = function() {
-        this.__isDestroyed = true;
-        this.owner = null;
-        this.trigger("destroy");
-        //this.off();
-        this._events = null;
-        this._subscriptions.forEach(function(item) {
-            item.off(null,null,this);
-        }, this);
-        this._subscriptions = null;
+        disablePrivateLock = true;
+        try {
+            this.__isDestroyed = true;
+            this.owner = null;
+            this.trigger("destroy");
+            //this.off();
+            this._events = null;
+            this._subscriptions.forEach(function(item) {
+                item.off(null,null,this);
+            }, this);
+            this._subscriptions = null;
+        } catch(){}
+        disablePrivateLock = false;
     };
 
     Model.prototype.collectionEvent = function() {
