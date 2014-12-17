@@ -546,6 +546,21 @@ describe("modscore", function() {
                 expect(result).toEqual("My name is Kermit");
 
             });
+
+            it("Should support keepKeys argument", function() {
+                var result = m_.substitute("My {{a.b.c.descriptor}} is {{a.b.firstName}}{{z.lastName}}", {
+                    a: {
+                        b: {
+                            c: {
+                                descriptor: "name"
+                            },
+                            firstName: "Kermit"
+                        }
+                    }
+                }, true);
+                expect(result).toEqual("My name is Kermit{{z.lastName}}");
+
+            });
         });
     });
 

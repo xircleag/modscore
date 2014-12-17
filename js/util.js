@@ -584,14 +584,24 @@
   };
 
   // Todo: Use a single predefined regex?
-  _.substitute = function(tmpl, data) {
+  // @param {boolean] [keepKeys=false] - If a key such as "Sent by {{sender}}" does not recieve a value, keep "{{sender}}" or replace it with ""?
+  // Set keep Keys to true to keep {{sender}}.  Note that if ai pass in {sender: undefined} then a value for sender HAS
+  // been provided, and {{sender}} will be replaced with ""
+  _.substitute = function(tmpl, data, keepKeys) {
     return String(tmpl).replace(/\{\{.*?\}\}/g, function(key) {
         key = key.substring(2,key.length-2);
         var parts = key.split("."), d = data;
         while (parts.length) {
             var part = parts.shift();
-            if (d && typeof d == "object") d = d[part];
+            if (d && typeof d == "object") {
+              if ( keepKeys && !(part in d)) {
+                d = "{{" + key + "}}";
+              } else {
+                d = d[part];
+              }
+            }
         }
+
         if (d === null || d === undefined) d = "";
         return d;
   });
