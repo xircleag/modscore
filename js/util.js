@@ -599,6 +599,8 @@
               } else {
                 d = d[part];
               }
+            } else if (keepKeys) {
+              d = "{{" + key + "}}";
             }
         }
 
