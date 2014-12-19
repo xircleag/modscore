@@ -768,10 +768,13 @@
     var isNode = typeof global !== "undefined" && typeof window === "undefined" || navigator.userAgent.match(/PhantomJS/);
 
 
+    // See if modscore has previously been loaded, and if so, insure that we share its class registry
+    // and role registry
     if (!global.modscore) global.modscore = {};
     var classRegistry = global.modscore.classRegistry = global.modscore.classRegistry || {};
     var roleRegistry = global.modscore.roleRegistry = global.modscore.roleRegistry || {};
 
+    /* istanbul ignore */
     if (classRegistry.Model) {
         module.exports = classRegistry.Model;
         return;
@@ -1625,6 +1628,7 @@
      * Mostly needed for running test scripts.
      * Remove all configurations from this Model
      */
+     /*
     Model.unconfigure = function(options) {
         if (this.$meta.configure) {
             var properties = this.$meta.properties;
@@ -1640,7 +1644,7 @@
             }, this);
         }
     };
-
+*/
     Model.$meta = {
         properties: {
             constructor: {
