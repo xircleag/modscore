@@ -48,6 +48,20 @@ describe("Collections", function() {
 
     });
 
+    it("Should insert or add appropriately", function() {
+        expect(c.length).toEqual(2);
+
+        var wilma = new Person({firstName: "Wilma"});
+        c.add(wilma);
+        expect(c.at(2)).toBe(wilma);
+
+        var dogma = new Person({firstName: "Dogma"});
+        c.add(dogma,false, 1);
+        expect(c.at(1)).toBe(dogma);
+    });
+
+
+
     it("Should fire events on add/remove", function() {
         var added, removed;
         c.once("add", function(item) {
@@ -103,6 +117,20 @@ describe("Collections", function() {
         expect(flint).toBe(c.getData()[1]);
     });
 
+    it("Should find with context", function() {
+        var d = new Date();
+        var flint = c.find(function(item) {
+            expect(this).toBe(d);
+            return item.lastName == "Flinstone";
+        }, d);
+    });
+
+    it("Should findWhere", function() {
+        var d = new Date();
+        var flint = c.findWhere({lastName: "Flinstone"});
+        expect(flint).toBe(c.getData()[1]);
+    });
+
     it("Should iterate", function() {
         var items = [];
         c.each(function(item) {
@@ -122,9 +150,10 @@ describe("Collections", function() {
     it("Should sortBy", function() {
         var wilma = new Person({firstName: "Wilma"});
         c.add(wilma);
+        c.add(wilma);
 
         c.sortBy(function(item) {return item.firstName});
-        expect(c.map(function(item) {return item.firstName})).toEqual(["Fred", "Wilma", undefined]);
+        expect(c.map(function(item) {return item.firstName})).toEqual(["Fred", "Wilma", "Wilma", undefined]);
     });
 
     it("Should initialize a model field if that field is a collection", function() {

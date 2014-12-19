@@ -106,12 +106,12 @@ module.exports = function(grunt) {
 		browserify: {
 		  	modscore: {
 			    files: {
-			      'build/modscore.js': ['js/browserify.js']
+			      'build/modscore.js': ['js/index.js']
 			    }
 			},
 			coverage: {
 				files: {
-			      'coverage/modscore.js': ['js/browserify.js']
+			      'coverage/modscore.js': ['js/index.js']
 			    },
 			    options: {
 			    	transform: ["istanbulify"]

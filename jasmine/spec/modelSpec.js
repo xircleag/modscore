@@ -24,6 +24,10 @@ describe("Model", function() {
             isAlive: {
                 type: "boolean"
             },
+            isAlmostAlive: {
+                type: "boolean",
+                autoAdjust: true
+            },
             rankings: {
                 type: "object"
             },
@@ -61,6 +65,21 @@ describe("Model", function() {
             };
             expect(f).toThrow();
         });
+
+        it("age should reject non-integer values", function() {
+
+            expect(function() {
+                p.age = "hey";
+            }).toThrow();
+
+            expect(function() {
+                p.age = 5.5;
+            }).toThrow();
+
+            p.age = 5555;
+            expect(p.age).toEqual(5555);
+        });
+
 
         it("Date types should be settable with autoAdjust enabled", function() {
             var d1 = new Date(), d2 = new Date(0);
@@ -129,8 +148,10 @@ describe("Model", function() {
             var f1 = function() {
                 p.isAlive = "true";
             };
-
             expect(f1).toThrow();
+
+            p.isAlmostAlive = "fred";
+            expect(p.isAlmostAlive).toBe(true);
         });
 
 
@@ -215,6 +236,7 @@ describe("Model", function() {
                 methods: {
                     init: function(inargs) {
                         result = true;
+                        expect(this.isInitializing()).toBe(true);
                     }
                 }
             });
@@ -232,8 +254,29 @@ describe("Model", function() {
                 }
             });
             var p = new Poodle({a:5}, 8, "Fred");
-
+            expect(Boolean(p.isInitializing())).toEqual(false);
         });
+
+        it("Test custom postInit", function() {
+            var initCalled = false, postInitCalled = false;
+            var Dog = m_.Model.extend({
+                name: "Dog",
+                properties: genericPersonDef,
+                methods: {
+                    init: function(inargs) {
+                        expect(postInitCalled).toEqual(false);
+                        initCalled = true;
+                    },
+                    postInit: function(inargs) {
+                        expect(initCalled).toEqual(true);
+                        postInitCalled = true;
+                    }
+                }
+            });
+            var d = new Dog();
+            expect(postInitCalled).toEqual(true);
+        });
+
 
         it("Test custom methods", function() {
             var Dog = m_.Model.extend({

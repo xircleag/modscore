@@ -2,7 +2,7 @@
   "name": "modscore",
   "version": "0.1.2",
   "description": "Library for utilities and objects",
-  "main": "js/browserify.js",
+  "main": "js/index.js",
   "scripts": {
     "test": "test"
   },
@@ -26,6 +26,7 @@
     "grunt-notify": "^0.3.1",
     "grunt-saucelabs": "^8.3.2",
     "grunt-template-jasmine-istanbul": "^0.3.0",
+    "istanbulify": "^0.1.0",
     "request": "^2.44.0"
   }
 }
