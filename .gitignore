@@ -2,5 +2,4 @@ modscore.sublime-*
 node_modules
 jsdocs
 tmp
-credentials.json
 coverage
