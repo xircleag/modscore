@@ -791,7 +791,7 @@
                 __notinitialized: true
             };
 
-            this.internalId = m_.uniqueId(params && params.internalId ? params.internalId : this.__class.name)
+            this.internalId = m_.uniqueId(params && params.internalId ? params.internalId : this.__class.name);
             delete params.internalId; // only safe because we cloned params; else this could cause problems.
 
             this.__isDestroyed = false;
@@ -940,7 +940,6 @@
 
 
     function setterPreProcess(def, caller, name, inValue, values) {
-        var result = {};
         var validatorResult;
         var type, validator;
         /* istanbul ignore if: Privates not tested */

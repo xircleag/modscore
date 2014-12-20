@@ -484,7 +484,7 @@ module.exports = Collection.extend({
          setData: function(inArray, silent) {
             // A technique for modifying the existing data object without
             // firing off any setters (infinite loop)
-            this.data.splice.apply(this.data, [0,this.length].concat(inArray))
+            this.data.splice.apply(this.data, [0,this.length].concat(inArray));
             var itemEvt = this.itemEvt;
             this.each(function(item) {
                 if (item instanceof m_.Model) {
