@@ -19,7 +19,7 @@
  * (c) 2013 Nicolas Perriault
  *
  * MODIFIED BY Michael: Removes miniscore
- * @class overscore.Events
+ * @class modscore.Events
  */
 
 

@@ -1,6 +1,6 @@
 /**
  * This module contains a subset of underscorejs, with some modifications where needed.
- * @class overscore.Util
+ * @class modscore.Util
  * @singleton
  * @author Michael Kantor
  *

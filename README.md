@@ -76,7 +76,7 @@ This library provides all that object oriented goodness with all the behaviors d
 
 ### Step 1: Add the script to your page:
 
-   &lt;script type="text/javascript" src='overscore.min.js'>&lt;/script>
+   &lt;script type="text/javascript" src='modscore.min.js'>&lt;/script>
 
 ### Step 2: In your js folder, define some objects.
 

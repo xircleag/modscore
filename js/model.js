@@ -1,5 +1,5 @@
 /**
- * @class overscore.Model
+ * @class modscore.Model
  * @author Michael Kantor
  *
  * START-GIT-README
@@ -78,7 +78,7 @@
  *
  * ### Step 1: Add the script to your page:
  *
- *    &lt;script type="text/javascript" src='overscore.min.js'>&lt;/script>
+ *    &lt;script type="text/javascript" src='modscore.min.js'>&lt;/script>
  *
  * ### Step 2: In your js folder, define some objects.
  *

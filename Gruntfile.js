@@ -74,7 +74,7 @@ module.exports = function(grunt) {
 
 		jasmine: {
 			options: {
-				specs: ['jasmine/spec/overscoreSpec.js', 'jasmine/spec/modelSpec.js', 'jasmine/spec/collectionSpec.js']
+				specs: ['jasmine/spec/modscoreSpec.js', 'jasmine/spec/modelSpec.js', 'jasmine/spec/collectionSpec.js']
 			},
 			modscore: {
 				src: ["build/modscore.js"],
@@ -157,7 +157,7 @@ module.exports = function(grunt) {
 			options: {}
 		},
 		buildGitReadme: {
-			overscore: {
+			modscore: {
 				prepend: "<%= pkg.name %>\n========\n\n",
 				paths: ["js/model.js"],
 				output: "README.md"
@@ -165,7 +165,7 @@ module.exports = function(grunt) {
 			options: {}
 		},
 		removeDebuggers: {
-			overscore: {
+			modscore: {
 				paths: ["js/*.js"],
 				output: "README.md"
 			},

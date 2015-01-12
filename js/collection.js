@@ -2,7 +2,7 @@ var Model = require("./model.js");
 var m_ = require("./util.js");
 
 /**
- * @class overscore.Collection
+ * @class modscore.Collection
  * Provides a collection class for use as a property of a model.
  * This class is currently a virtual class; see ArrayCollection
  */
@@ -29,7 +29,7 @@ var Collection = Model.extend({
 });
 
 /**
- * @class overscore.ArrayCollection
+ * @class modscore.ArrayCollection
  * Provides a collection class for use as a property of a model.
  * Why not just use an array?  You can use an array, but if you want
  * events triggered whenever an item is added or removed from the collection,
@@ -214,7 +214,7 @@ module.exports = Collection.extend({
         /**
          * @method
          * @private
-         * @param {overscore.Model} item - Item that triggered the event
+         * @param {modscore.Model} item - Item that triggered the event
          * @param {string} evtName - Name of the event (new, destroy, change, change:age, etc...)
          */
         itemEvt: {
