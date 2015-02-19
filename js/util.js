@@ -275,6 +275,45 @@
     });
   };
 
+  /**
+   * This method is a bit like defer, but allows you to name
+   * a job such that if another call to scheduleJob with that same
+   * name happens before its run, then only the last one gets fired.
+   *
+   *     data.forEach(function(item) {
+   *       if (item.hasCondition) {
+   *         // No matter how many times this is called, "DoThisSoon" is only called once
+   *         m_.scheduleJob("DoThisSoon", 1, function() {...});
+   *       }
+   *     })
+   *
+   *     data.forEach(function(item) {
+   *       if (item.hasCondition) {
+   *         // By making the job name unique, each call will be scheduled... but
+   *         // we can run this loop a second time without scheduling redundant extra jobs
+   *         m_.scheduleJob("DoThisSoon" + item.id, 1, function() {...});
+   *       }
+   *     })
+   *
+   *
+   * @method scheduleJob
+   * @param {String} inName Name of the job
+   * @param {integer} inDelay Number of miliseconds to wait
+   * @param {Function} inJob Function to run after the delay
+   */
+   var jobs = {};
+  _.scheduleJob = function(inName, inDelay, inJob) {
+    _.cancelJob(inName);
+
+    var job = function() {
+      delete jobs[inName];
+      inJob();
+    };
+    jobs[inName] = setTimeout(job, inDelay);
+  };
+  _.cancelJob = function(inName) {
+      clearTimeout(jobs[inName]);
+  };
 
 
   /**

@@ -635,6 +635,19 @@ describe("modscore", function() {
                     });
                 });
 
+                describe("m_.scheduleJob", function() {
+                    it("Fires each job only once", function() {
+                        m_.scheduleJob("Job1", 1, timerCallback);
+                        m_.scheduleJob("Job1", 1, timerCallback);
+                        m_.scheduleJob("Job1", 1, timerCallback);
+                        m_.scheduleJob("Job2", 1, timerCallback);
+                        m_.scheduleJob("Job2", 1, timerCallback);
+                        m_.scheduleJob("Job2", 1, timerCallback);
+                        expect(timerCallback.calls.count()).toEqual(0);
+                        jasmine.clock().tick(1);
+                        expect(timerCallback.calls.count()).toEqual(2);
+                    });
+                });
             });
 
             describe("m_.debounce", function() {
