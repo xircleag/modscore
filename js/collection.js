@@ -301,6 +301,11 @@ module.exports = Collection.extend({
             if (!silent) {
                 this.trigger("add", item);
                 this.trigger("change", item);
+                if (this.indexOf(item) != this.length-1) {
+                    m_.scheduleJob("reorderEvent" + this.internalId,1, function() {
+                        this.trigger("reorder");
+                    }.bind(this));
+                }
             }
             if (item instanceof Model) {
                 item.on("all", this.itemEvt.bind(this, item), this);
