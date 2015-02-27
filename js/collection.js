@@ -409,7 +409,7 @@ module.exports = Collection.extend({
                         return m_.getValue(item, sortByProp);
                     });
                 } else if (this.sortByFunc) {
-                    this.sort(this.sortByFunc);
+                    this.sort(this.sortByFunc,silent);
                 }
                 if ((sortByProp || this.sortByFunc) && this.reverseSort) this.data.reverse();
                 if (!silent) {
@@ -451,11 +451,15 @@ module.exports = Collection.extend({
         /**
          * @method
          * Standard Array.sort method
+         * @param {Function} fn Sort function: function(a,b) {return 1|-1|0;}
+         * @param {boolean} [silent=false] Don't notify of reorder/change
          */
-        sort: function(fn) {
+        sort: function(fn, silent) {
             this.data.sort(fn);
-            this.trigger("reorder");
-            this.trigger("change");
+            if (!silent) {
+                this.trigger("reorder");
+                this.trigger("change");
+            }
         },
 
         /**
