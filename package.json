@@ -1,6 +1,6 @@
 {
-  "name": "chat-widget-modscore",
-  "version": "0.1.0",
+  "name": "modscore",
+  "version": "0.1.4",
   "description": "Library for utilities and objects",
   "main": "js/index.js",
   "scripts": {
