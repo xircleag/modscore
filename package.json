@@ -1,14 +1,17 @@
 {
-  "name": "modscore",
-  "version": "0.1.2",
+  "name": "chat-widget-modscore",
+  "version": "0.1.0",
   "description": "Library for utilities and objects",
   "main": "js/index.js",
   "scripts": {
     "test": "test"
   },
-  "repository": {
+ "repository": {
     "type": "git",
-    "url": "https://github.com/layerhq/modscore.git"
+    "url": "git@github.com:layerhq/modscore.git#onboarding"
+  },
+  "publishConfig": {
+    "registry": "http://npm.infra.lyr8.net"
   },
   "author": "Michael Kantor",
   "license": "ISC",
